@@ -3,7 +3,8 @@
 	"package": "magichand.modid.mixin",
 	"compatibilityLevel": "JAVA_17",
 	"mixins": [
-		"ExampleMixin"
+		"ExampleMixin",
+		"SwingHandMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

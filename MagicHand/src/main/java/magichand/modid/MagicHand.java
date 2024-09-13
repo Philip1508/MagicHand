@@ -1,5 +1,8 @@
 package magichand.modid;
 
+import magichand.modid.entity.EntityRegistrator;
+import magichand.modid.items.ItemRegistrator;
+import magichand.modid.networking.PacketRegistrator;
 import net.fabricmc.api.ModInitializer;
 
 import org.slf4j.Logger;
@@ -20,5 +23,12 @@ public class MagicHand implements ModInitializer {
 		// Proceed with mild caution.
 
 		LOGGER.info("Hello Fabric world!");
+		ItemRegistrator.initializeAndRegister();
+
+
+		EntityRegistrator.initializeAndRegister();
+
+		PacketRegistrator.initializeAndRegister();
+
 	}
 }

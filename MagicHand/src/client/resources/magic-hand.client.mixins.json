@@ -3,7 +3,8 @@
 	"package": "magichand.modid.mixin.client",
 	"compatibilityLevel": "JAVA_17",
 	"client": [
-		"ExampleClientMixin"
+      "FirstPersonArmRenderMixin",
+		"WorldArmRenderMixin"
 	],
 	"injectors": {
 		"defaultRequire": 1

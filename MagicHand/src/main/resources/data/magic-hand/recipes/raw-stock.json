@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "misc",
+
+  "ingredients": [
+
+    {
+      "item": "minecraft:bone"
+    },
+    {
+      "item": "simply-food:filled-claybowl"
+    }
+
+  ],
+  "result": {
+    "item": "simply-food:raw-stock"
+  }
+}
