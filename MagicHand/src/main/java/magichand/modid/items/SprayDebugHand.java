@@ -7,6 +7,7 @@ import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.item.TooltipContext;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -18,6 +19,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.UseAction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -25,12 +27,14 @@ import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.Locale;
 
 
 public class SprayDebugHand extends Item {
 
 
     public static final String ACTIVE_CAST = "ACTIVE_CAST";
+
     public static final String CURRENTLY_CASTING = "CURRENTLY_CASTING";
     public static final String CASTED_HAND = "CASTED_HAND";
     public static final String REMAINING = "TICKS_LEFT";
@@ -51,6 +55,10 @@ public class SprayDebugHand extends Item {
         ItemStack mainHand = user.getMainHandStack();
         ItemStack offHand = user.getOffHandStack();
 
+        ItemStack stackInhand = user.getStackInHand(hand);
+
+        NbtCompound nbtCompound = stackInhand.getOrCreateSubNbt(ACTIVE_CAST);
+
 
         Hand bootlegHand = hand;
 
@@ -58,9 +66,6 @@ public class SprayDebugHand extends Item {
         {
 
             NbtCompound nbt = offHand.getOrCreateSubNbt(ACTIVE_CAST);
-
-
-
             //shoot(world, user, hand, user.getStackInHand(hand));
 
             // ToDo; Seperate for when already firing vs. start of firing sequence...
@@ -70,19 +75,35 @@ public class SprayDebugHand extends Item {
             nbt.putInt(CASTED_HAND, 1);
             nbt.putInt(REMAINING,  3);
             bootlegHand = Hand.OFF_HAND;
+            if (!nbtCompound.getBoolean(CURRENTLY_CASTING))
+            {
+                shoot(world, user, hand, user.getStackInHand(hand));
+            }
 
 
         }
-        else {
+        else
+        {
 
 
-        NbtCompound nbt = user.getStackInHand(hand).getOrCreateSubNbt(ACTIVE_CAST);
-        int castedHand= bootlegHand == Hand.MAIN_HAND ? 0:1;
+            if (hand == Hand.MAIN_HAND && offHand.getUseAction() != UseAction.NONE)
+            {
+                return  TypedActionResult.pass(user.getStackInHand(hand));
+            }
+
+            NbtCompound nbt = user.getStackInHand(hand).getOrCreateSubNbt(ACTIVE_CAST);
+            int castedHand= bootlegHand == Hand.MAIN_HAND ? 0:1;
 
 
-        nbt.putBoolean(CURRENTLY_CASTING, true);
-        nbt.putInt(CASTED_HAND, castedHand);
-        nbt.putInt(REMAINING,  3);
+            nbt.putBoolean(CURRENTLY_CASTING, true);
+            nbt.putInt(CASTED_HAND, castedHand);
+            nbt.putInt(REMAINING,  3);
+
+            if (!nbtCompound.getBoolean(CURRENTLY_CASTING))
+            {
+                shoot(world, user, hand, user.getStackInHand(hand));
+            }
+
 
 
         }
@@ -110,6 +131,15 @@ public class SprayDebugHand extends Item {
 
     @Override
     public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
+
+
+        if (entity instanceof ClientPlayerEntity clientPlayer)
+        {
+            MagicHand.LOGGER.info(String.valueOf(MinecraftClient.getInstance().gameRenderer.getCamera().isThirdPerson()));
+
+
+        }
+
 
         if (entity instanceof LivingEntity living)
         {
@@ -168,6 +198,7 @@ public class SprayDebugHand extends Item {
 
         if (activeCast && entity instanceof PlayerEntity player && world.getTime() % 3 == 0)
         {
+
             if ((!player.getStackInHand(hand).isOf(ItemRegistrator.DEBUG_SPRAY_HAND)))
             {
                 nbt.putBoolean(CURRENTLY_CASTING, false);
@@ -219,7 +250,7 @@ public class SprayDebugHand extends Item {
 
 
         SprayMagicProjectile projectile = SprayMagicProjectile.create(world, user, appliedHandOffset);
-        projectile.setVelocity(user, user.getPitch()-2.2f,relativYaw ,0.0f, 0.8f, 0.3f);
+        projectile.setVelocity(user, user.getPitch()-3f,relativYaw ,0.0f, 0.8f, 0.3f);
         projectile.setPreviousShot(previousShot);
 
 
