@@ -21,6 +21,12 @@ public class RuntimeDataTester extends Item {
             MagickaMachine.registerPlayer(user);
         }
 
+
+        if (!world.isClient() && hand == Hand.MAIN_HAND)
+        {
+            MagickaMachine.getPlayerRuntimeData(user).getManaManager().decreaseMana(10);
+        }
+
         return TypedActionResult.pass(user.getStackInHand(hand));
 
 

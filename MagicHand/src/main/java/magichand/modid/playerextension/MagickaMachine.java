@@ -16,6 +16,8 @@ import java.util.Map;
 
 public abstract class MagickaMachine {
 
+    private static final int mainScalingFactor = 1000;
+
     // Note that this data structure is NOT synced across clients! Be wary of the consequences that ensue!
     private static final Map<PlayerEntity, PlayerRuntimeData> PLAYER_TO_MAGICKDATA = new HashMap<>();
 
@@ -27,22 +29,23 @@ public abstract class MagickaMachine {
     public static void tick(PlayerEntity player)
     {
 
-        // Dieser Fall muss durch Networking scheinbar definiert werden...?
-        // Das ist hier so nicht möglich. Scheinbar muss bei der Serialisierung eine Nachricht an den Client
-        // gesendet werden, welche den Client entsprechend registrieren müsste?
-        // Wir brauchen hierbei scheinbar eine vollständige Tick-Injection für den Client, wobei diese Datenstruktur
-        // im Client entsprechend parallel vorhanden seien muss.
-        // Dies ist handlich, da Spieler in der "Partie" ggf. geteilt werden könnten.
-        //if (player instanceof ClientPlayerEntity clientPlayer)
-        //{
-        //    MagicHand.LOGGER.info("Client Tick");
-        //}
+
 
 
         if (PLAYER_TO_MAGICKDATA.containsKey(player) && player instanceof ServerPlayerEntity serverPlayer)
         {
-            
-            MagicHand.LOGGER.info("Server Tick");
+            PLAYER_TO_MAGICKDATA.get(player).getManaManager().tick();
+
+            if (player.getWorld().getTime() % 30 == 0)
+            {
+                PLAYER_TO_MAGICKDATA.get(player).getManaManager().recalculateRegeneration();
+            }
+
+            if (player.getWorld().getTime() % 8 == 0)
+            {
+                MagicHand.LOGGER.info("Current Mana: " + String.valueOf(PLAYER_TO_MAGICKDATA.get(player).getManaManager().getMana()));
+            }
+
         }
 
 
@@ -61,7 +64,9 @@ public abstract class MagickaMachine {
             PlayerRuntimeData playerData = PLAYER_TO_MAGICKDATA.get(player);
             playerNbt.put(NbtConstants.MAGIC_NBT, playerData.serialize());
 
-            PLAYER_TO_MAGICKDATA.remove(player);
+
+            // Das darf hier nicht passieren.
+            // PLAYER_TO_MAGICKDATA.remove(player);
         }
     }
 
@@ -118,6 +123,16 @@ public abstract class MagickaMachine {
     }
 
 
+
+
+
+
+
+
+    public static PlayerRuntimeData getPlayerRuntimeData(PlayerEntity player)
+    {
+        return PLAYER_TO_MAGICKDATA.get(player);
+    }
 
 
 }
