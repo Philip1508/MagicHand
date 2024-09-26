@@ -29,6 +29,8 @@ public class ItemRegistrator {
         ALL_ITEMS.add(DEBUG_HAND);
         ALL_ITEMS.add(DEBUG_SPRAY_HAND);
 
+        Registry.register(Registries.ITEM, new Identifier(MagicHand.MOD_ID, "runtimedata-tester"), new RuntimeDataTester(new FabricItemSettings()));
+
 
 
     }
