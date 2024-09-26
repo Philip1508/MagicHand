@@ -41,10 +41,7 @@ public abstract class MagickaMachine {
                 PLAYER_TO_MAGICKDATA.get(player).getManaManager().recalculateRegeneration();
             }
 
-            if (player.getWorld().getTime() % 8 == 0)
-            {
-                MagicHand.LOGGER.info("Current Mana: " + String.valueOf(PLAYER_TO_MAGICKDATA.get(player).getManaManager().getMana()));
-            }
+
 
         }
 

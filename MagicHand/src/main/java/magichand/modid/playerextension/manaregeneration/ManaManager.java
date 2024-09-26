@@ -10,7 +10,7 @@ public class ManaManager {
     // This is equal to 1%!
     private static int BASE_REGENERATION = 100;
 
-    volatile private int  dummyScaling = 8;
+    volatile private int  dummyScaling = 0;
 
     private int mana;
     private int maxMana;
@@ -28,8 +28,22 @@ public class ManaManager {
         }
         else
         {
-            this.mana = serializedManaManagerCompbound.getInt(NbtConstants.MANA);
-            this.maxMana = serializedManaManagerCompbound.getInt(NbtConstants.MAX_MANA);
+            int mana = serializedManaManagerCompbound.getInt(NbtConstants.MANA);
+            int maxMana = serializedManaManagerCompbound.getInt(NbtConstants.MAX_MANA);
+
+            // This is necessary since gradle clean just doesn't work and old code keeps getting compiled in...
+            if (maxMana != 0)
+            {
+                this.mana = mana;
+                this.maxMana = maxMana;
+            }
+            else
+            {
+                this.mana = 100;
+                this.maxMana = 100;
+            }
+
+
         }
 
 
@@ -70,6 +84,7 @@ public class ManaManager {
 
         int scaling = BASE_REGENERATION + 25 * dummyScaling;
 
+        // The Mana in and on itself could be a Rational from the get go, this would save constructor call.
         Rational maxMana = new Rational(this.maxMana);
 
         Rational percentagePerSecond = maxMana.multiply(new Rational(scaling, 10000));
@@ -108,6 +123,10 @@ public class ManaManager {
         return mana;
     }
 
+    public int getMaxMana()
+    {
+        return maxMana;
+    }
 
 
 
