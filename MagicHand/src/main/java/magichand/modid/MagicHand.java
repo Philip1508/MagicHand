@@ -1,8 +1,11 @@
 package magichand.modid;
 
+import magichand.modid.enchantments.EnchantmentRegistrator;
 import magichand.modid.entity.EntityRegistrator;
 import magichand.modid.items.ItemRegistrator;
 import magichand.modid.networking.PacketRegistrator;
+import magichand.modid.statuseffect.PotionRegistrator;
+import magichand.modid.statuseffect.StatusEffectRegistrator;
 import net.fabricmc.api.ModInitializer;
 
 import org.slf4j.Logger;
@@ -27,6 +30,11 @@ public class MagicHand implements ModInitializer {
 
 
 		EntityRegistrator.initializeAndRegister();
+
+		StatusEffectRegistrator.initializeAndRegister();
+		PotionRegistrator.initializeAndRegister();
+
+		EnchantmentRegistrator.initializeAndRegister();
 
 		PacketRegistrator.initializeAndRegister();
 

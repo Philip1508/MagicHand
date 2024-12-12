@@ -4,11 +4,21 @@ import magichand.modid.playerextension.manaregeneration.ManaManager;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 
+/**
+ * This Class represents a Data Structure which holds the runtime Data of a Player.
+ * This Includes a reference to the player himself in order to grant future access to the inventory.
+ * In Addition, it holds a players ManaManager.
+ * It will most likely also hold a spell inventory in the future.
+ */
 public class PlayerRuntimeData {
 
-    // This reference is necessary for doing stuff like scanning the inventory.
-    PlayerEntity player;
-    ManaManager manaManager;
+    // This reference is necessary for enabling tasks such as scanning the inventory.
+    private PlayerEntity player;
+    private ManaManager manaManager;
+
+    private MagickaMachineState state = MagickaMachineState.MANA_PASSIVE_REGENERATION;
+
+    private int regenerationCooldown = (20) * 3;
 
     
 
@@ -60,7 +70,23 @@ public class PlayerRuntimeData {
     
 
 
+    public void setRegenerationCooldown(int cooldown)
+    {
+        this.regenerationCooldown = cooldown;
+    }
+    public int getRegenerationCooldown()
+    {
+        return this.regenerationCooldown;
+    }
 
+    public void setState(MagickaMachineState state)
+    {
+        this.state = state;
+    }
+    public MagickaMachineState getState()
+    {
+        return state;
+    }
     
 
     

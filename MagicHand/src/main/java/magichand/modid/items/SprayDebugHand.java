@@ -3,11 +3,12 @@ package magichand.modid.items;
 import magichand.modid.MagicHand;
 import magichand.modid.entity.SprayMagicProjectile;
 import magichand.modid.networking.PacketRegistrator;
+import magichand.modid.playerextension.MagickaMachine;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.item.TooltipContext;
-import net.minecraft.client.network.ClientPlayerEntity;
+
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -92,7 +93,7 @@ public class SprayDebugHand extends Item {
             }
 
             NbtCompound nbt = user.getStackInHand(hand).getOrCreateSubNbt(ACTIVE_CAST);
-            int castedHand= bootlegHand == Hand.MAIN_HAND ? 0:1;
+            int castedHand = bootlegHand == Hand.MAIN_HAND ? 0:1;
 
 
             nbt.putBoolean(CURRENTLY_CASTING, true);
@@ -133,12 +134,7 @@ public class SprayDebugHand extends Item {
     public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
 
 
-        if (entity instanceof ClientPlayerEntity clientPlayer)
-        {
-            MagicHand.LOGGER.info(String.valueOf(MinecraftClient.getInstance().gameRenderer.getCamera().isThirdPerson()));
 
-
-        }
 
 
         if (entity instanceof LivingEntity living)
@@ -227,6 +223,14 @@ public class SprayDebugHand extends Item {
     private void shoot(World world, PlayerEntity user, Hand hand, ItemStack stack)
     {
 
+        boolean x = MagickaMachine.getPlayerRuntimeData(user).getManaManager().decreaseMana(3);
+
+        if (!x)
+        {
+            return;
+        }
+
+        MagickaMachine.activatePlayerManaRegenerationCooldown(user);
 
 
         Vec3d handCoordinates = getHandPosOffset(user, hand);

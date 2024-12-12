@@ -58,6 +58,8 @@ public class MagicHandUI implements HudRenderCallback {
         int mana = manaManager.getMana();
         int maxMana = manaManager.getMaxMana();
 
+        if (mana > maxMana) {mana = maxMana;}
+
         drawContext.drawCenteredTextWithShadow(textRenderer, Text.of(String.valueOf(mana) + " / " + String.valueOf(maxMana)),
                 (width / 2 )
                 ,

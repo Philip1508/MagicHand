@@ -79,6 +79,8 @@ public class SprayDebugHandManaTest extends Item {
 
 
 
+
+
             return  TypedActionResult.pass(user.getStackInHand(hand));
 
 

@@ -16,7 +16,6 @@ import java.util.Map;
 
 public abstract class MagickaMachine {
 
-    private static final int mainScalingFactor = 1000;
 
     // Note that this data structure is NOT synced across clients! Be wary of the consequences that ensue!
     private static final Map<PlayerEntity, PlayerRuntimeData> PLAYER_TO_MAGICKDATA = new HashMap<>();
@@ -29,17 +28,39 @@ public abstract class MagickaMachine {
     public static void tick(PlayerEntity player)
     {
 
-
-
-
         if (PLAYER_TO_MAGICKDATA.containsKey(player) && player instanceof ServerPlayerEntity serverPlayer)
         {
-            PLAYER_TO_MAGICKDATA.get(player).getManaManager().tick();
+            PlayerRuntimeData playerData = PLAYER_TO_MAGICKDATA.get(player);
 
-            if (player.getWorld().getTime() % 30 == 0)
+            switch (playerData.getState())
             {
-                PLAYER_TO_MAGICKDATA.get(player).getManaManager().recalculateRegeneration();
+                case MANA_ACTIVE_CAST ->
+                {
+                    playerData.setRegenerationCooldown(playerData.getRegenerationCooldown() - 1);
+                    if (playerData.getRegenerationCooldown() == 0)
+                    {
+                        playerData.setState(MagickaMachineState.MANA_PASSIVE_REGENERATION);
+                    }
+
+                }
+
+
+                case MANA_PASSIVE_REGENERATION ->
+                {
+                    playerData.getManaManager().tick();
+
+
+                    // Update maximum Mana and Mana Regeneration every 1.5 Seconds.
+                    if (player.getWorld().getTime() % 30 == 0)
+                    {
+                        PLAYER_TO_MAGICKDATA.get(player).getManaManager().recalculateRegeneration(player);
+                        PLAYER_TO_MAGICKDATA.get(player).getManaManager().recalculateMaximumMana(player);
+                    }
+                }
             }
+
+
+
 
 
 
@@ -76,9 +97,6 @@ public abstract class MagickaMachine {
     public static void deserializePlayer(PlayerEntity player, NbtCompound magickData)
     {
         PLAYER_TO_MAGICKDATA.put(player, new PlayerRuntimeData(player,magickData));
-
-
-
     }
 
     public static void registerPlayer(PlayerEntity player)
@@ -129,6 +147,15 @@ public abstract class MagickaMachine {
     public static PlayerRuntimeData getPlayerRuntimeData(PlayerEntity player)
     {
         return PLAYER_TO_MAGICKDATA.get(player);
+    }
+
+
+    public static void activatePlayerManaRegenerationCooldown(PlayerEntity player)
+    {
+        PLAYER_TO_MAGICKDATA.get(player).setState(MagickaMachineState.MANA_ACTIVE_CAST);
+
+        PLAYER_TO_MAGICKDATA.get(player).setRegenerationCooldown(20*3);;
+
     }
 
 

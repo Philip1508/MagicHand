@@ -1,21 +1,42 @@
 package magichand.modid.playerextension.manaregeneration;
 
+import magichand.modid.enchantments.MaximumManaEnchantment;
+import magichand.modid.enchantments.RegenerateManaEnchantment;
 import magichand.modid.playerextension.NbtConstants;
+import magichand.modid.statuseffect.StatusEffectRegistrator;
 import magichand.modid.util.Rational;
+import net.minecraft.enchantment.Enchantment;
+import net.minecraft.enchantment.EnchantmentHelper;
+import net.minecraft.entity.effect.StatusEffectInstance;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtList;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ManaManager {
 
     // This is equal to 1%!
     private static int BASE_REGENERATION = 100;
 
-    volatile private int  dummyScaling = 0;
+    // These Constants define scaling behavior on additional mana and regeneration of mana.
+    private int additionalRegenerationScalingBase = 25;
+    private int additionalManaScalingBase = 25;
 
+    // The Players current Mana
     private int mana;
+
+    // The Maximum Mana of a player, before "temporary" increases of maximum Mana.
+    private int baseMaxMana;
+
     private int maxMana;
 
+    // This Rational represents the current decimal places part of the mana.
     private Rational fractionalMana;
+    // This Rational represents the amount of fractional Mana added to the fractional Mana per Tick.
     private Rational regenerationalFactor;
 
 
@@ -24,7 +45,7 @@ public class ManaManager {
         if (serializedManaManagerCompbound == null)
         {
             this.mana = 100;
-            this.maxMana = 100;
+            this.baseMaxMana = 100;
         }
         else
         {
@@ -35,12 +56,12 @@ public class ManaManager {
             if (maxMana != 0)
             {
                 this.mana = mana;
-                this.maxMana = maxMana;
+                this.baseMaxMana = maxMana;
             }
             else
             {
                 this.mana = 100;
-                this.maxMana = 100;
+                this.baseMaxMana = 100;
             }
 
 
@@ -51,16 +72,20 @@ public class ManaManager {
     }
 
 
-
     public void tick()
     {
         if (fractionalMana == null || regenerationalFactor == null)
         {
-            recalculateRegeneration();
+            recalculateRegeneration(null);
+            recalculateRegeneration(null);
         }
 
+        // On each Tick we want to advance the amount of mana the player has regenerated. This is why we add the
+        // Regenerational Factor, calculated in recalculateRegeneration(), to the fractionalMana.
         this.fractionalMana = fractionalMana.add(regenerationalFactor);
 
+        // If we have regenerated an entire point of Mana, then we want to reset the fractional Mana (subtract all
+        // whole points and add those to the integer Mana).
         if (fractionalMana.greaterOne())
         {
             int regeneratedPoints = fractionalMana.getWholeAndFlatten();
@@ -78,42 +103,143 @@ public class ManaManager {
     }
 
 
-
-    public void recalculateRegeneration()
+    /**
+     * This Method recalculates how much Mana per Tick is regenerated.
+     * @param player - If given a player, it will scan for Enchantments and Potion Status Effects to consider in the
+     *               calculation.
+     */
+    public void recalculateRegeneration(@Nullable PlayerEntity player)
     {
 
-        int scaling = BASE_REGENERATION + 25 * dummyScaling;
+        int scaling = BASE_REGENERATION;
+
+        AtomicInteger bonusRegeneration = new AtomicInteger(0);
+        if (player != null)
+        {
+
+            // First, we shall scan the Players equipment for enhancing enchantments.
+            Iterable<ItemStack> playerArmorItems = player.getArmorItems();
+
+            playerArmorItems.forEach(itemStack -> {
+
+                NbtList enchantments = itemStack.getEnchantments();
+                Map<Enchantment, Integer> x = EnchantmentHelper.fromNbt(enchantments);
+
+                x.forEach((enchantment, level) ->
+                {
+                    if (enchantment instanceof RegenerateManaEnchantment)
+                    {
+                        bonusRegeneration.addAndGet(level);
+                    }
+                });
+
+            });
+
+            // Now, we shall scan wether the player has consumed a Potion boosting Mana Regeneration.
+
+            StatusEffectInstance manaRegenerationStatusEffectInstance = player
+                    .getStatusEffect(StatusEffectRegistrator.MANA_REGENERATION);
+
+            if (manaRegenerationStatusEffectInstance != null)
+            {
+                // We want to fetch the Amplifier of said Potion.
+                int potionStrength = manaRegenerationStatusEffectInstance.getAmplifier();
+                // We must increment by 1, as the default amplifier starts with 0.
+                potionStrength += 1;
+
+                // Each Potion gives 1% Bonus Regeneration.
+                bonusRegeneration.addAndGet(potionStrength * 4 );
+
+            }
+
+
+        }
+
+        scaling = scaling + additionalRegenerationScalingBase * bonusRegeneration.get();
+
+
 
         // The Mana in and on itself could be a Rational from the get go, this would save constructor call.
         Rational maxMana = new Rational(this.maxMana);
 
+        // Der Denominator 10000 gibt hierbei die Genauigkeit an. So So ist das Ratio 100 + 25*S / 10000 Möglich
         Rational percentagePerSecond = maxMana.multiply(new Rational(scaling, 10000));
 
+        // We Multiply by 1/20th to adjust to Minecraft Tick Speed
         Rational percentagePerTick = percentagePerSecond.multiply(new Rational(1, 20));
 
         percentagePerTick.shorten();
 
         this.fractionalMana = new Rational(0, percentagePerTick.getDenominator());
         this.regenerationalFactor = percentagePerTick;
+
+        //System.out.println(scaling);
     }
 
+    /**
+     * This Method recalculates how much Mana the Player has / Should have.
+     * @param player - If given a player, it will scan for Enchantments and Potion Status Effects to consider in the
+     *               calculation.
+     */
+    public void recalculateMaximumMana(@Nullable PlayerEntity player)
+    {
 
+        AtomicInteger bonusMana = new AtomicInteger(0);
+        if (player != null)
+        {
+            Iterable<ItemStack> playerArmorItems = player.getArmorItems();
+
+
+            playerArmorItems.forEach(itemStack -> {
+
+                NbtList enchantments = itemStack.getEnchantments();
+                Map<Enchantment, Integer> x = EnchantmentHelper.fromNbt(enchantments);
+
+                x.forEach((enchantment, level) ->
+                {
+                    if (enchantment instanceof MaximumManaEnchantment)
+                    {
+                        bonusMana.addAndGet(level);
+                    }
+                });
+
+            });
+        }
+
+        maxMana = baseMaxMana + bonusMana.get() * additionalManaScalingBase;
+
+        //System.out.println("Maximum Mana: " + maxMana);
+
+
+
+
+    }
+
+    /**
+     * This Method serializes the ManaManager of a Player to an NbtCompound.
+     * @return NbtCompound - Serialized ManaManager
+     */
     public NbtCompound serialize()
     {
         NbtCompound serializedManaManager = new NbtCompound();
         serializedManaManager.putInt(NbtConstants.MANA, this.mana);
-        serializedManaManager.putInt(NbtConstants.MAX_MANA, this.maxMana);
+        serializedManaManager.putInt(NbtConstants.MAX_MANA, this.baseMaxMana);
         return serializedManaManager;
 
     }
 
 
 
-    public void decreaseMana(int amount)
+    public boolean decreaseMana(int amount)
     {
-            if (amount <= mana)
+        if (mana - amount >= 0)
         {
-            mana -= amount;
+            setMana(mana - amount);
+            return true;
+        }
+        else
+        {
+            return false;
         }
 
     }
@@ -121,6 +247,23 @@ public class ManaManager {
     public int getMana()
     {
         return mana;
+    }
+
+    public void setMana(int mana)
+    {
+        this.mana = mana;
+    }
+
+    public void increaseMana(int amount)
+    {
+        if (amount + this.mana < maxMana)
+        {
+            setMana(amount+this.mana);
+        }
+        else
+        {
+            this.mana = maxMana;
+        }
     }
 
     public int getMaxMana()
