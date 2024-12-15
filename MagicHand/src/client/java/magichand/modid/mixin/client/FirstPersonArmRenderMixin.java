@@ -1,6 +1,7 @@
 package magichand.modid.mixin.client;
 
 import magichand.modid.items.ItemRegistrator;
+import magichand.modid.items.spellcatalysts.RenderAbstractionInterface;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.item.HeldItemRenderer;
@@ -40,7 +41,8 @@ public abstract class FirstPersonArmRenderMixin {
 	, CallbackInfo ci) {
 
 
-		if (item.isOf(ItemRegistrator.DEBUG_SPRAY_HAND))
+		//if (item.isOf(ItemRegistrator.DEBUG_SPRAY_HAND))
+		if (item.getItem() instanceof RenderAbstractionInterface)
 		{
 
 			boolean isMainHand = hand == Hand.MAIN_HAND;

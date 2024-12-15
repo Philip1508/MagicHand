@@ -2,6 +2,7 @@ package magichand.modid.items;
 
 import magichand.modid.MagicHand;
 import magichand.modid.entity.SprayMagicProjectile;
+import magichand.modid.items.spellcatalysts.RenderAbstractionInterface;
 import magichand.modid.networking.PacketRegistrator;
 import magichand.modid.playerextension.MagickaMachine;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
@@ -31,7 +32,7 @@ import java.util.List;
 import java.util.Locale;
 
 
-public class SprayDebugHand extends Item {
+public class SprayDebugHand extends Item implements RenderAbstractionInterface {
 
 
     public static final String ACTIVE_CAST = "ACTIVE_CAST";
@@ -275,7 +276,7 @@ public class SprayDebugHand extends Item {
 
 
 
-    private final Vec3d getRotationVector(float pitch, float yaw) {
+    private Vec3d getRotationVector(float pitch, float yaw) {
         float f = pitch * (float) (Math.PI / 180.0);
         float g = -yaw * (float) (Math.PI / 180.0);
         float h = MathHelper.cos(g);

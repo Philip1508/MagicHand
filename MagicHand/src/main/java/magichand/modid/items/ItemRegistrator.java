@@ -1,6 +1,7 @@
 package magichand.modid.items;
 
 import magichand.modid.MagicHand;
+import magichand.modid.items.spellcatalysts.SpellCatalyst;
 import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.minecraft.item.Item;
 import net.minecraft.registry.Registries;
@@ -19,6 +20,7 @@ public class ItemRegistrator {
     public static Item DEBUG_HAND;
     public static Item DEBUG_SPRAY_HAND;
 
+    public static Item SPELL_CATALYST;
 
     public static void initializeAndRegister()
     {
@@ -26,6 +28,9 @@ public class ItemRegistrator {
 
         DEBUG_HAND = Registry.register(Registries.ITEM, new Identifier(MagicHand.MOD_ID,"debughand"),new DebugHand(new FabricItemSettings().maxCount(1)));
         DEBUG_SPRAY_HAND = Registry.register(Registries.ITEM, new Identifier(MagicHand.MOD_ID,"debug-spray-hand"),new SprayDebugHand(new FabricItemSettings().maxCount(1)));
+
+        SPELL_CATALYST = Registry.register(Registries.ITEM, new Identifier(MagicHand.MOD_ID, "spell-catalyst"), new SpellCatalyst(new FabricItemSettings().maxCount(1)));
+
         ALL_ITEMS.add(DEBUG_HAND);
         ALL_ITEMS.add(DEBUG_SPRAY_HAND);
 

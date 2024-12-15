@@ -1,6 +1,7 @@
 package magichand.modid.mixin.client;
 
 import magichand.modid.items.ItemRegistrator;
+import magichand.modid.items.spellcatalysts.RenderAbstractionInterface;
 import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.item.HeldItemRenderer;
@@ -37,7 +38,7 @@ public abstract class WorldArmRenderMixin {
 	) {
 
 
-		if (stack.isOf(ItemRegistrator.DEBUG_SPRAY_HAND))
+		if (stack.getItem() instanceof RenderAbstractionInterface)
 		{
 			ci.cancel();
 		}
