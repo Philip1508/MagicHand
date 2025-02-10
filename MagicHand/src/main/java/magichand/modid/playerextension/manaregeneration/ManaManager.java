@@ -35,6 +35,8 @@ public class ManaManager {
     private int maxMana;
 
     // This Rational represents the current decimal places part of the mana.
+
+
     private Rational fractionalMana;
     // This Rational represents the amount of fractional Mana added to the fractional Mana per Tick.
     private Rational regenerationalFactor;
@@ -46,23 +48,37 @@ public class ManaManager {
         {
             this.mana = 100;
             this.baseMaxMana = 100;
+            this.maxMana = 100;
+            this.fractionalMana = new Rational(0);
+            this.regenerationalFactor = new Rational(0);
         }
         else
         {
             int mana = serializedManaManagerCompbound.getInt(NbtConstants.MANA);
             int maxMana = serializedManaManagerCompbound.getInt(NbtConstants.MAX_MANA);
+            int bonusMaxMana = serializedManaManagerCompbound.getInt(NbtConstants.BONUS_MAX_MANA);
 
-            // This is necessary since gradle clean just doesn't work and old code keeps getting compiled in...
-            if (maxMana != 0)
+            this.mana = mana;
+            this.baseMaxMana = maxMana;
+            this.maxMana = bonusMaxMana;
+
+
+
+            int[] deserializedFractionalMana = serializedManaManagerCompbound.getIntArray(NbtConstants.FRACTIONAL_MANA);
+            int[] deserializedRegeneration = serializedManaManagerCompbound.getIntArray(NbtConstants.MANA_REGENERATION_FRACTION);
+
+            if (deserializedFractionalMana.length == 0 || deserializedRegeneration.length == 0)
             {
-                this.mana = mana;
-                this.baseMaxMana = maxMana;
+                this.fractionalMana = new Rational(0,1);
+                this.regenerationalFactor = new Rational(0,1);
             }
             else
             {
-                this.mana = 100;
-                this.baseMaxMana = 100;
+                this.fractionalMana = new Rational(deserializedFractionalMana[0], deserializedFractionalMana[1]);
+                this.regenerationalFactor = new Rational(deserializedRegeneration[0], deserializedRegeneration[1]);
             }
+
+
 
 
         }
@@ -224,6 +240,11 @@ public class ManaManager {
         NbtCompound serializedManaManager = new NbtCompound();
         serializedManaManager.putInt(NbtConstants.MANA, this.mana);
         serializedManaManager.putInt(NbtConstants.MAX_MANA, this.baseMaxMana);
+        serializedManaManager.putInt(NbtConstants.BONUS_MAX_MANA, this.maxMana);
+
+        serializedManaManager.putIntArray(NbtConstants.FRACTIONAL_MANA, new int[]{fractionalMana.getNumerator(),fractionalMana.getDenominator()} );
+        serializedManaManager.putIntArray(NbtConstants.MANA_REGENERATION_FRACTION, new int[]{regenerationalFactor.getNumerator(),regenerationalFactor.getDenominator()} );
+
         return serializedManaManager;
 
     }

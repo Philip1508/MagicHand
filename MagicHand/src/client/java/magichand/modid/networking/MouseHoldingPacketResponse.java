@@ -6,6 +6,7 @@ import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.util.InputUtil;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 
@@ -17,6 +18,7 @@ public class MouseHoldingPacketResponse {
 
 
         packet.writeBoolean(MinecraftClient.getInstance().mouse.wasLeftButtonClicked());
+
 
         ClientPlayNetworking.send(PacketRegistrator.STILL_ACTIVE, packet);
 

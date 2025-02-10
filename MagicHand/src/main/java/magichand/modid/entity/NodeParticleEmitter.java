@@ -28,9 +28,6 @@ public class NodeParticleEmitter {
 
 
     SprayMagicProjectile node;
-
-
-
     Entity previousNode;
 
 

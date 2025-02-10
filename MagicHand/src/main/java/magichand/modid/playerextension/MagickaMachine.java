@@ -28,35 +28,45 @@ public abstract class MagickaMachine {
     public static void tick(PlayerEntity player)
     {
 
-        if (PLAYER_TO_MAGICKDATA.containsKey(player) && player instanceof ServerPlayerEntity serverPlayer)
-        {
+
+        // If the player isn't a magic user (not in Relation) then do nothing (Safety).
+        if (!PLAYER_TO_MAGICKDATA.containsKey(player))  {return;}
+
             PlayerRuntimeData playerData = PLAYER_TO_MAGICKDATA.get(player);
 
             switch (playerData.getState())
             {
                 case MANA_ACTIVE_CAST ->
                 {
+                    // Both server and client want know when it is time to regenerate again
                     playerData.setRegenerationCooldown(playerData.getRegenerationCooldown() - 1);
                     if (playerData.getRegenerationCooldown() == 0)
                     {
                         playerData.setState(MagickaMachineState.MANA_PASSIVE_REGENERATION);
                     }
 
+                    // Spell Execution Code?
+
                 }
 
 
                 case MANA_PASSIVE_REGENERATION ->
                 {
+                    // This Tick must also be called on the client to ensure smooth progress of the mana bar.
+                    // Perhaps in the future we can make the server skip ticks if it is running behind, whilst smoothly
+                    // regenerating on the client.
                     playerData.getManaManager().tick();
 
-
-                    // Update maximum Mana and Mana Regeneration every 1.5 Seconds.
-                    if (player.getWorld().getTime() % 30 == 0)
+                    // Update maximum Mana and Mana Regeneration every 1.5 Seconds. "Expensive Update"
+                    if (player.getWorld().getTime() % 30 == 0 && player instanceof ServerPlayerEntity)
                     {
                         PLAYER_TO_MAGICKDATA.get(player).getManaManager().recalculateRegeneration(player);
                         PLAYER_TO_MAGICKDATA.get(player).getManaManager().recalculateMaximumMana(player);
+                        sendS2CPacket(player);
                     }
                 }
+
+
             }
 
 
@@ -64,7 +74,9 @@ public abstract class MagickaMachine {
 
 
 
-        }
+
+
+
 
 
 
@@ -150,6 +162,7 @@ public abstract class MagickaMachine {
     }
 
 
+    // ToDo; Remove magic numbers.
     public static void activatePlayerManaRegenerationCooldown(PlayerEntity player)
     {
         PLAYER_TO_MAGICKDATA.get(player).setState(MagickaMachineState.MANA_ACTIVE_CAST);
