@@ -1,5 +1,8 @@
 package magichand.modid.items.spellcatalysts;
 
+import magichand.modid.MagicHand;
+import magichand.modid.playerextension.MagickaMachine;
+import magichand.modid.playerextension.PlayerRuntimeData;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.player.PlayerEntity;
@@ -51,7 +54,6 @@ public abstract class AbstractSpellCatalyst extends Item implements RenderAbstra
                 return  TypedActionResult.pass(player.getStackInHand(Hand.MAIN_HAND));
             }
 
-            player.sendMessage(Text.of("Dual Wield, Shooting left!"));
 
 
 
@@ -61,7 +63,11 @@ public abstract class AbstractSpellCatalyst extends Item implements RenderAbstra
 
         }
 
-        player.sendMessage(Text.of("Non Dual Wield, Shooting UsedHand!"));
+
+        if (player instanceof ServerPlayerEntity sPlayer)
+        {
+            MagickaMachine.getPlayerRuntimeData(sPlayer).getCastMachine().initiateCast(hand);
+        }
 
         // Cast Sequenz in MagickaMachine anstoßen?
         return  TypedActionResult.success(player.getStackInHand(hand));

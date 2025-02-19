@@ -1,5 +1,6 @@
 package magichand.modid.playerextension;
 
+import magichand.modid.playerextension.activecast.CastMachine;
 import magichand.modid.playerextension.manaregeneration.ManaManager;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
@@ -16,6 +17,8 @@ public class PlayerRuntimeData {
     private PlayerEntity player;
     private ManaManager manaManager;
 
+    private CastMachine castMachine;
+
     private MagickaMachineState state = MagickaMachineState.MANA_PASSIVE_REGENERATION;
 
     private int regenerationCooldown = (20) * 3;
@@ -31,7 +34,7 @@ public class PlayerRuntimeData {
         NbtCompound manaManagerCompbound = magickData.getCompound(NbtConstants.MANA_MANAGER);
 
         this.manaManager = new ManaManager(manaManagerCompbound);
-
+        this.castMachine = new CastMachine(player);
 
 
     }
@@ -42,6 +45,7 @@ public class PlayerRuntimeData {
     {
         this.player = player;
         this.manaManager = new ManaManager(null);
+        this.castMachine = new CastMachine(player);
     }
 
 
@@ -67,27 +71,26 @@ public class PlayerRuntimeData {
     {
         return this.manaManager;
     }
-    
+    public CastMachine getCastMachine(){return this.castMachine;}
 
 
     public void setRegenerationCooldown(int cooldown)
     {
         this.regenerationCooldown = cooldown;
     }
-    public int getRegenerationCooldown()
-    {
-        return this.regenerationCooldown;
-    }
+
 
     public void setState(MagickaMachineState state)
     {
         this.state = state;
+        // ToDo; Inform Client of new State!
     }
     public MagickaMachineState getState()
     {
         return state;
     }
-    
+
+
 
     
 

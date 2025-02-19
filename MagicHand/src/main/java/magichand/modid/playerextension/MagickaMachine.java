@@ -1,9 +1,6 @@
 package magichand.modid.playerextension;
 
-import magichand.modid.MagicHand;
 import magichand.modid.networking.PacketRegistrator;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
@@ -20,6 +17,7 @@ public abstract class MagickaMachine {
     // Note that this data structure is NOT synced across clients! Be wary of the consequences that ensue!
     private static final Map<PlayerEntity, PlayerRuntimeData> PLAYER_TO_MAGICKDATA = new HashMap<>();
 
+    public static ExtentionClientRepresentation clientRepresentation;
 
 
 
@@ -27,22 +25,28 @@ public abstract class MagickaMachine {
 
     public static void tick(PlayerEntity player)
     {
-
+        boolean isClient = player.getWorld().isClient();
+        boolean isServer = !isClient;
 
         // If the player isn't a magic user (not in Relation) then do nothing (Safety).
         if (!PLAYER_TO_MAGICKDATA.containsKey(player))  {return;}
 
-            PlayerRuntimeData playerData = PLAYER_TO_MAGICKDATA.get(player);
+        PlayerRuntimeData playerData = PLAYER_TO_MAGICKDATA.get(player);
 
             switch (playerData.getState())
             {
                 case MANA_ACTIVE_CAST ->
                 {
                     // Both server and client want know when it is time to regenerate again
-                    playerData.setRegenerationCooldown(playerData.getRegenerationCooldown() - 1);
-                    if (playerData.getRegenerationCooldown() == 0)
+                    //playerData.setRegenerationCooldown(playerData.getRegenerationCooldown() - 1);
+                    //if (playerData.getRegenerationCooldown() == 0)
+                    //{
+                    //    playerData.setState(MagickaMachineState.MANA_PASSIVE_REGENERATION);
+                    //}
+
+                    if (player instanceof ServerPlayerEntity)
                     {
-                        playerData.setState(MagickaMachineState.MANA_PASSIVE_REGENERATION);
+                        playerData.getCastMachine().tick();
                     }
 
                     // Spell Execution Code?

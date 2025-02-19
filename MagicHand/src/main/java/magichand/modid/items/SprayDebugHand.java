@@ -210,7 +210,7 @@ public class SprayDebugHand extends Item implements RenderAbstractionInterface {
                 PacketByteBuf packet = PacketByteBufs.create();
                 packet.writeBoolean(false);
                 MagicHand.LOGGER.info("Sending out KeepalivePing");
-                ServerPlayNetworking.send(user,PacketRegistrator.STILL_ACTIVE, packet);
+                ServerPlayNetworking.send(user, PacketRegistrator.STILL_ACTIVE, packet);
             }
 
 
@@ -248,7 +248,7 @@ public class SprayDebugHand extends Item implements RenderAbstractionInterface {
             return;
         }
         // If a shot was made, Mode is switched to regeneration cooldown.
-        MagickaMachine.activatePlayerManaRegenerationCooldown(user);
+        //MagickaMachine. activatePlayerManaRegenerationCooldown(user);
 
 
         // Here we calculate the handCoordinateOffset and apply it to the users coordinates.
