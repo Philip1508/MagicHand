@@ -10,7 +10,7 @@ public class PEClientRepresentation {
     public final PlayerEntity player;
 
     static final int DEFAULT_LIFETIME = 6*20;
-    int lifetime;
+    int lifetime = DEFAULT_LIFETIME;
 
     public Rational mana;
     public Rational manaRegeneration;
@@ -22,9 +22,6 @@ public class PEClientRepresentation {
     {
         this.player = player;
 
-        this.lifetime = 6*20;
-
-
         this.mana = mana;
         this.manaRegeneration = manaRegeneration;
         this.manaFractional = manaFractional;
@@ -33,7 +30,10 @@ public class PEClientRepresentation {
     }
 
 
-
+    /**
+     * Checks if the ClientRepresentation is dead.
+     * @return - True, iff too old, false if not.
+     */
     public boolean notRefreshed()
     {
         lifetime -= 1;
@@ -44,6 +44,9 @@ public class PEClientRepresentation {
         return false;
     }
 
+    /**
+     * Refreshes the Lifetime of the ClientRepresentation. Called on every incoming UpdateMessage.
+     */
     public void refresh()
     {
         lifetime = DEFAULT_LIFETIME;

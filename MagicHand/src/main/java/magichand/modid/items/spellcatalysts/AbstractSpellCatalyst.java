@@ -4,6 +4,7 @@ import magichand.modid.MagicHand;
 import magichand.modid.playerextension.MagickaMachine;
 import magichand.modid.playerextension.MagickaMachineState;
 import magichand.modid.playerextension.PlayerRuntimeData;
+import magichand.modid.playerextension.activecast.CastMachine;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.player.PlayerEntity;
@@ -32,47 +33,45 @@ public abstract class AbstractSpellCatalyst extends Item implements RenderAbstra
 
     public TypedActionResult<ItemStack> use(World world, PlayerEntity player, Hand hand)
     {
+
         ItemStack mainHandStack = player.getMainHandStack();
         ItemStack offHandStack = player.getOffHandStack();
 
-        // Wenn bereits gecasted wird, dann muss gar nichts getan werden:
-        /*
-        if (casting)
-
+        if (player instanceof ServerPlayerEntity sPlayer && MagickaMachine.isPlayerMagicuser(sPlayer))
         {
-            return  TypedActionResult.pass(player.getStackInHand(Hand.MAIN_HAND));
-        }
-        */
-
-        // Wenn man dual wielded, dann wird Use auf beide Hände ausgeführt.
 
 
+            CastMachine castMachine = MagickaMachine.getPlayerRuntimeData(sPlayer).getCastMachine();
 
-        if (mainHandStack.getItem() instanceof AbstractSpellCatalyst && offHandStack.getItem() instanceof  AbstractSpellCatalyst)
-        {
-            if (hand == Hand.MAIN_HAND)
+            boolean[] firingArr = castMachine.isActive();
+
+
+            // If Dual Wied
+            if (mainHandStack.getItem() instanceof AbstractSpellCatalyst && offHandStack.getItem() instanceof  AbstractSpellCatalyst)
             {
-                return  TypedActionResult.pass(player.getStackInHand(Hand.MAIN_HAND));
+                if (hand == Hand.MAIN_HAND)
+                {
+                    if (!firingArr[1])
+                    {
+                        castMachine.initiateCast(Hand.OFF_HAND);
+                    }
+
+                    return  TypedActionResult.pass(player.getStackInHand(Hand.MAIN_HAND));
+                }
+
             }
 
+            boolean intiatedCast = castMachine.initiateCast(hand);
 
 
 
-            // Cast Sequenz in MagickaMachine anstoßen?
-
-            return  TypedActionResult.success(player.getStackInHand(Hand.OFF_HAND));
 
         }
 
 
-        if (player instanceof ServerPlayerEntity sPlayer)
-        {
-            boolean intiatedCast = MagickaMachine.getPlayerRuntimeData(sPlayer).getCastMachine().initiateCast(hand);
-            System.out.println("Boolean is: " + intiatedCast);
 
-        }
-
-        return  TypedActionResult.success(player.getStackInHand(hand));
+        // Do Nothing
+        return  TypedActionResult.pass(player.getStackInHand(hand));
 
 
     }

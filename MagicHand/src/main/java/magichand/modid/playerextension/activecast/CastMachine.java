@@ -18,9 +18,14 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
+/**
+ * This Class defines a machine which calculates the active firing of spells.
+ */
 public class CastMachine {
 
     private PlayerEntity player;
+
+    private boolean active = false;
 
     private boolean mainHandFiring = false;
     private int mainHandPreviousNodeUUID = 0;
@@ -31,7 +36,9 @@ public class CastMachine {
 
 
 
-    private int regenerationCooldown = (20) * 3;
+    private static final int REGENERATION_COOLDOWN_DEFAULT = (20) * 3;
+
+    private int regenerationCooldown = REGENERATION_COOLDOWN_DEFAULT;
 
 
 
@@ -41,43 +48,37 @@ public class CastMachine {
     }
 
 
-
+    /**
+     * This Method is the tick for the CastMachine.
+     */
     public void tick()
     {
 
-        boolean active = mainHandFiring || offHandFiring;
+        this.active = mainHandFiring || offHandFiring;
 
         // If the cast is not active anymore, then we must set the player on his way to start regenerating mana again!
         if (!active)
         {
-
-            if (regenerationCooldown < 0)
+            if ((regenerationCooldown -=1) < 0)
             {
                 MagickaMachine.getPlayerRuntimeData(player).setState(MagickaMachineState.MANA_PASSIVE_REGENERATION);
-                regenerationCooldown = (20)*3;
-
-
+                regenerationCooldown = REGENERATION_COOLDOWN_DEFAULT;
             }
-            regenerationCooldown = regenerationCooldown - 1;
         }
 
 
         boolean timeForUpdate = player.getWorld().getTime() % 3 == 0;
-
         if (!timeForUpdate)
         {
             return;
         }
 
+
         // If the player puts away the chime, casting must be aborted immidiatly.
         if (!(player.getStackInHand(Hand.MAIN_HAND).getItem() instanceof AbstractSpellCatalyst))
-        {
-            disableHand(Hand.MAIN_HAND);
-        }
+        { disableHand(Hand.MAIN_HAND); }
         if (!(player.getStackInHand(Hand.OFF_HAND).getItem() instanceof AbstractSpellCatalyst))
-        {
-            disableHand(Hand.OFF_HAND);
-        }
+        { disableHand(Hand.OFF_HAND); }
 
         // If the cast is active, we must check if the player is still holding down the mouse buttons!
         if (active && player instanceof ServerPlayerEntity sPlayer)
@@ -114,30 +115,34 @@ public class CastMachine {
     }
 
 
-
+    /**
+     * This method initiates a Spellcast for a given hand.
+     * @param hand
+     * @return Boolean, wether cast has been initiated (true) or not (false, iff already casting)
+     */
     public boolean initiateCast(Hand hand)
     {
-        boolean oldState;
         switch (hand)
         {
             case MAIN_HAND -> {
-                System.out.println("MainHandFiring before Changes: " + mainHandFiring);
-
                 if (!mainHandFiring)
                 {
                     mainHandFiring = true;
                     MagickaMachine.getPlayerRuntimeData(player).setState(MagickaMachineState.MANA_ACTIVE_CAST);
-                    return mainHandFiring;
+                    return true;
                 }
-
                 return false;
             }
 
             case OFF_HAND ->  {
-                oldState = offHandFiring;
-                offHandFiring = true;
+                if (!offHandFiring)
+                {
+                    offHandFiring = true;
+                    MagickaMachine.getPlayerRuntimeData(player).setState(MagickaMachineState.MANA_ACTIVE_CAST);
+                    return true;
+                }
+                return false;
 
-                return !oldState;
             }
             default -> {return false;}
         }
@@ -145,7 +150,13 @@ public class CastMachine {
     }
 
 
-    public void shoot(World world, PlayerEntity user, Hand hand)
+    /**
+     * This Method deploys a projectile.
+     * @param world - World of projectile.
+     * @param user - Caster
+     * @param hand - Hand where the projectile is being cast.
+     */
+    private void shoot(World world, PlayerEntity user, Hand hand)
     {
 
         PlayerRuntimeData data = MagickaMachine.getPlayerRuntimeData(user);
@@ -202,10 +213,14 @@ public class CastMachine {
         // Spawning of the Entity.
         user.getWorld().spawnEntity(projectile);
 
-
     }
 
 
+    /**
+     * This method disables a casting hand.
+     * Usually called from the networking if a player doesn't hold down the mouse buttons anymore.
+     * @param hand
+     */
     public void disableHand(Hand hand)
     {
         switch (hand)
@@ -214,6 +229,16 @@ public class CastMachine {
             case OFF_HAND -> {offHandFiring = false;}
         }
 
+    }
+
+
+    public boolean[] isActive()
+    {
+        boolean[] arr = new boolean[2];
+        arr[0] = mainHandFiring;
+        arr[1] = offHandFiring;
+
+        return arr;
     }
 
 

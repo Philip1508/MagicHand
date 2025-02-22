@@ -21,21 +21,23 @@ import java.util.Map;
 public abstract class MagickaMachine {
 
 
-    // Note that this data structure is NOT synced across clients! Be wary of the consequences that ensue!
+    // Server Side Map containing the Extended Runtime Data for each Player (Key).
     private static final Map<PlayerEntity, PlayerRuntimeData> PLAYER_TO_MAGICKDATA = new HashMap<>();
 
+    // This is the Client Side representation of the data given above. This is NOT in the Client Environmnent
+    // due to the nature of the Code Injection Work being done here.
     public static PEClientRepresentation clientRepresentation;
 
 
-
-
-
+    /**
+     * This Function is the extended Tick Function of a PlayerEntity.
+     * It detects wether we are on the Server or Clientside and calculates the next step of the ExtendedData.
+     * @param player - Given from PlayerEntity.tick()
+     */
     public static void tick(PlayerEntity player)
     {
         boolean isClient = player.getWorld().isClient();
         boolean isServer = !isClient;
-
-
 
 
         if (isClient) {clientTick(player);}
@@ -47,8 +49,11 @@ public abstract class MagickaMachine {
 
 
     /**
-     * Note: This is the Raw Player Nbt. It is possible that there is no serialized Data in here!
-     * */
+     * This is the Extension of the Serializing Function from the PlayerEntityMixin.
+     * It serializes the PlayerExtension to NbtCompbound and saves it in the Players mainNbt.
+     * @param player
+     * @param playerNbt
+     */
     public static void serializePlayer(PlayerEntity player, NbtCompound playerNbt)
     {
         if (PLAYER_TO_MAGICKDATA.containsKey(player))
@@ -57,57 +62,52 @@ public abstract class MagickaMachine {
             playerNbt.put(PlayerDataSerializerNbtConstants.MAGIC_NBT, playerData.serialize());
         }
 
-
     }
 
 
-
-
     /**
-     * Note: The NbtCompbound in this case is the Sub Nbt containin the Data; It can be read from directly!
-     * */
+     * This Method deserializes PlayerRuntimeData from a given Nbt.
+     * @param player
+     * @param magickData
+     */
     public static void deserializePlayer(PlayerEntity player, NbtCompound magickData)
     {
         PLAYER_TO_MAGICKDATA.put(player, new PlayerRuntimeData(player,magickData));
     }
 
+    /**
+     * This Method registers a (new) Player to the MagickaMachine, iff he isn't registered in the first place.
+     *
+     * @param player - Player to become a magic user.
+     */
     public static void registerPlayer(PlayerEntity player)
     {
         if (!PLAYER_TO_MAGICKDATA.containsKey(player))
         {
             PLAYER_TO_MAGICKDATA.put(player, new PlayerRuntimeData(player));
-            S2C_FullTransmission(player);
+            S2CUpdater.serverToClientFullSynch(PLAYER_TO_MAGICKDATA.get(player));
         }
 
     }
 
 
-
-
-
-    public static void S2C_FullTransmission(PlayerEntity player)
-    {
-        if (player instanceof ServerPlayerEntity serverPlayer)
-        {
-            PlayerRuntimeData playerRuntimeData = PLAYER_TO_MAGICKDATA.get(player);
-            S2CUpdater.serverToClientFullSynch(playerRuntimeData);
-        }
-    }
-
-
-
-
-
-
-
-
+    /**
+     * This method fetches the PlayerRuntimeData for further use.
+     * @param player - PlayerEntity of which the corresponding data needs to be fetched.
+     * @return PlayerRuntimeData.
+     * ToDo; This is unsafe. This Data could be null.
+     */
     public static PlayerRuntimeData getPlayerRuntimeData(PlayerEntity player)
     {
         return PLAYER_TO_MAGICKDATA.get(player);
     }
 
 
-    public static void clientTick(PlayerEntity cPlayer)
+    /**
+     * This Method processes a tick on the ClientSide.
+     * @param cPlayer
+     */
+    private static void clientTick(PlayerEntity cPlayer)
     {
 
         if (cPlayer instanceof ServerPlayerEntity || clientRepresentation == null) {return;}
@@ -138,9 +138,6 @@ public abstract class MagickaMachine {
             }
         }
 
-
-
-
         // Destroy the representation if it's not refreshed...
         // This must happen at LAST.
         if (clientRepresentation.notRefreshed())  {
@@ -149,31 +146,26 @@ public abstract class MagickaMachine {
     }
 
 
-    public static void serverTick(PlayerEntity player)
+    /**
+     * This Method processes a tick on the ServerSide.
+     * @param player
+     */
+    private static void serverTick(PlayerEntity player)
     {
         // If the player isn't a magic user (not in Relation) then do nothing (Safety).
-        if (!PLAYER_TO_MAGICKDATA.containsKey(player))  {return;}
+        if (!PLAYER_TO_MAGICKDATA.containsKey(player) || player.getWorld().isClient() )  {return;}
 
         PlayerRuntimeData playerData = PLAYER_TO_MAGICKDATA.get(player);
 
-        if (playerData.loginRefresh())
-        {
-            S2C_FullTransmission(player);
-        }
+        // If the ClientSideRepresentation has not been established yet, do it.
+        if (playerData.loginRefresh()) {S2CUpdater.serverToClientFullSynch(playerData);}
 
 
         switch (playerData.getState())
         {
             case MANA_ACTIVE_CAST ->
             {
-
-
-                if (player instanceof ServerPlayerEntity)
-                {
-                    playerData.getCastMachine().tick();
-                }
-
-
+                playerData.getCastMachine().tick();
             }
 
 
@@ -184,7 +176,7 @@ public abstract class MagickaMachine {
                 playerData.getManaManager().tick();
 
                 // Update maximum Mana and Mana Regeneration every 5 Seconds. "Expensive Update"
-                if (player.getWorld().getTime() % (20*5) == 0 && player instanceof ServerPlayerEntity)
+                if (player.getWorld().getTime() % (20*5) == 0)
                 {
                     recalculateManaManager(player);
                 }
@@ -195,22 +187,38 @@ public abstract class MagickaMachine {
     }
 
 
-
+    /**
+     * This Method initiates a recalculation of the maximum mana and its regeneration.
+     * Necessary to make items such as Potions take effect immediately.
+     * This method is private, because it asserts the player is registered.
+     * @param player - Player whose Mana needs to be recalculated.
+     */
     private static void recalculateManaManager(PlayerEntity player)
     {
-        PLAYER_TO_MAGICKDATA.get(player).getManaManager().recalculateRegeneration(player);
-        PLAYER_TO_MAGICKDATA.get(player).getManaManager().recalculateMaximumMana(player);
-        S2C_FullTransmission(player);
+        PlayerRuntimeData playerRuntimeData = PLAYER_TO_MAGICKDATA.get(player);
+        playerRuntimeData.getManaManager().recalculateRegeneration(player);
+        playerRuntimeData.getManaManager().recalculateMaximumMana(player);
+        S2CUpdater.serverToClientFullSynch(playerRuntimeData);
     }
 
+    /**
+     * This Method provides public access to recalculateManaManager with null checking.
+     * It will refresh the Players ManaManager and send an update to the client.
+     * @param player - PlayerEntity which needs to be recalculated.
+     */
     public static void recalculateManaManagerSafe(PlayerEntity player)
     {
         if (PLAYER_TO_MAGICKDATA.containsKey(player))
         {
             recalculateManaManager(player);
         }
+    }
 
 
+
+    public static boolean isPlayerMagicuser(ServerPlayerEntity sPlayer)
+    {
+        return PLAYER_TO_MAGICKDATA.containsKey(sPlayer);
     }
 
 

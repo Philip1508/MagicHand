@@ -153,7 +153,7 @@ public class SprayMagicProjectile extends ProjectileEntity  {
         if (entityHitResult != null)
         {
             // ToDo; Code for Effect Application goes here.
-            //entityHitResult.getEntity().damage(getDamageSources().indirectMagic(this,getOwner()),2.5f);
+            //entityHitResult.getEntity()
             if (entityHitResult.getEntity() instanceof  LivingEntity living)
             {
 
@@ -175,7 +175,7 @@ public class SprayMagicProjectile extends ProjectileEntity  {
                         }*/
 
 
-
+                living.damage(getDamageSources().indirectMagic(this,getOwner()),2.5f);
                 living.setOnFireFor(10);
 
 
