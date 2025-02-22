@@ -4,6 +4,7 @@ import magichand.modid.MagicHand;
 import magichand.modid.entity.SprayMagicProjectile;
 import magichand.modid.items.spellcatalysts.AbstractSpellCatalyst;
 import magichand.modid.networking.PacketRegistrator;
+import magichand.modid.networking.S2CUpdater;
 import magichand.modid.playerextension.MagickaMachine;
 import magichand.modid.playerextension.MagickaMachineState;
 import magichand.modid.playerextension.PlayerRuntimeData;
@@ -50,17 +51,14 @@ public class CastMachine {
         if (!active)
         {
 
-            if (regenerationCooldown < 0);
+            if (regenerationCooldown < 0)
             {
                 MagickaMachine.getPlayerRuntimeData(player).setState(MagickaMachineState.MANA_PASSIVE_REGENERATION);
                 regenerationCooldown = (20)*3;
-                System.out.println("Aborting?=?????");
+
 
             }
-            //regenerationCooldown = regenerationCooldown - 1;
-            System.out.println("RegCool"+ regenerationCooldown);
-
-
+            regenerationCooldown = regenerationCooldown - 1;
         }
 
 
@@ -100,7 +98,7 @@ public class CastMachine {
 
             if (offHandFiring)
             {
-                shoot(player.getWorld(), player, Hand.MAIN_HAND);
+                shoot(player.getWorld(), player, Hand.OFF_HAND);
             }
 
 
@@ -120,18 +118,25 @@ public class CastMachine {
     public boolean initiateCast(Hand hand)
     {
         boolean oldState;
-        MagickaMachine.getPlayerRuntimeData(player).setState(MagickaMachineState.MANA_ACTIVE_CAST);
         switch (hand)
         {
             case MAIN_HAND -> {
-                oldState = mainHandFiring;
-                mainHandFiring = true;
-                return !oldState;
+                System.out.println("MainHandFiring before Changes: " + mainHandFiring);
+
+                if (!mainHandFiring)
+                {
+                    mainHandFiring = true;
+                    MagickaMachine.getPlayerRuntimeData(player).setState(MagickaMachineState.MANA_ACTIVE_CAST);
+                    return mainHandFiring;
+                }
+
+                return false;
             }
 
             case OFF_HAND ->  {
                 oldState = offHandFiring;
                 offHandFiring = true;
+
                 return !oldState;
             }
             default -> {return false;}
@@ -146,6 +151,7 @@ public class CastMachine {
         PlayerRuntimeData data = MagickaMachine.getPlayerRuntimeData(user);
 
         boolean enoughMana = data.getManaManager().decreaseMana(3);
+        S2CUpdater.serverToClientUpdateMana(player, data.getManaManager());
 
         if (!enoughMana)
         {

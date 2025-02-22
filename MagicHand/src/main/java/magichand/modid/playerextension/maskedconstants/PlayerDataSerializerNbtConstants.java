@@ -1,6 +1,6 @@
-package magichand.modid.playerextension;
+package magichand.modid.playerextension.maskedconstants;
 
-public class NbtConstants {
+public class PlayerDataSerializerNbtConstants {
 
     public static final String MAGIC_NBT = "MAGIC_NBT";
 

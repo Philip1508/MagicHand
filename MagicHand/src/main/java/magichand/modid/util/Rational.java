@@ -1,6 +1,8 @@
 package magichand.modid.util;
 
 
+import net.minecraft.nbt.NbtCompound;
+
 /**
  * This class represents a partial implementation of Rational Numbers, which are used for Mana regeneration.
  *
@@ -10,6 +12,9 @@ public class Rational {
 
     private int numerator;
     private int denominator;
+
+    private static final String numeratorKey = "numeratorKey";
+    private static final String denominatorKey = "denominatorKey";
 
     /**
      * This Construtor is used to create a Rational Number which solely represents an integer.
@@ -68,6 +73,15 @@ public class Rational {
     }
 
 
+    public void setNumerator(int numerator)
+    {
+        this.numerator = numerator;
+    }
+
+    public void setDenominator(int denominator)
+    {
+        this.denominator = denominator;
+    }
 
     public int getNumerator()
     {
@@ -112,7 +126,34 @@ public class Rational {
     }
 
 
+    public static NbtCompound rationalToNbt(Rational rational)
+    {
+        int numerator = rational.getNumerator();
+        int denominator = rational.getDenominator();
 
+        NbtCompound nbt = new NbtCompound();
+
+        nbt.putInt(Rational.numeratorKey, numerator);
+        nbt.putInt(Rational.denominatorKey, denominator);
+
+        return nbt;
+    }
+
+
+    public static Rational rationalFromNbt(NbtCompound nbt)
+    {
+
+        int numerator = nbt.getInt(Rational.numeratorKey);
+        int denominator = nbt.getInt(Rational.denominatorKey);
+
+        if (denominator == 0)
+        {
+            throw new IllegalArgumentException("The Denominator in a deserialized Rational is 0. (Division by 0)");
+        }
+
+        return new Rational(numerator, denominator);
+
+    }
 
 
     public static void main(String[] args) {

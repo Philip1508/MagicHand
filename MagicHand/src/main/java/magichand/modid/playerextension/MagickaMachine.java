@@ -1,6 +1,13 @@
 package magichand.modid.playerextension;
 
+import magichand.modid.MagicHand;
 import magichand.modid.networking.PacketRegistrator;
+import magichand.modid.networking.S2CUpdater;
+import magichand.modid.playerextension.activecast.CastMachine;
+import magichand.modid.playerextension.manaregeneration.ManaManager;
+import magichand.modid.playerextension.maskedconstants.ClientPlayerRepresentationConstants;
+import magichand.modid.playerextension.maskedconstants.PlayerDataSerializerNbtConstants;
+import magichand.modid.util.Rational;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
@@ -17,7 +24,7 @@ public abstract class MagickaMachine {
     // Note that this data structure is NOT synced across clients! Be wary of the consequences that ensue!
     private static final Map<PlayerEntity, PlayerRuntimeData> PLAYER_TO_MAGICKDATA = new HashMap<>();
 
-    public static ExtentionClientRepresentation clientRepresentation;
+    public static PEClientRepresentation clientRepresentation;
 
 
 
@@ -28,61 +35,12 @@ public abstract class MagickaMachine {
         boolean isClient = player.getWorld().isClient();
         boolean isServer = !isClient;
 
-        // If the player isn't a magic user (not in Relation) then do nothing (Safety).
-        if (!PLAYER_TO_MAGICKDATA.containsKey(player))  {return;}
-
-        PlayerRuntimeData playerData = PLAYER_TO_MAGICKDATA.get(player);
-
-            switch (playerData.getState())
-            {
-                case MANA_ACTIVE_CAST ->
-                {
-                    // Both server and client want know when it is time to regenerate again
-                    //playerData.setRegenerationCooldown(playerData.getRegenerationCooldown() - 1);
-                    //if (playerData.getRegenerationCooldown() == 0)
-                    //{
-                    //    playerData.setState(MagickaMachineState.MANA_PASSIVE_REGENERATION);
-                    //}
-
-                    if (player instanceof ServerPlayerEntity)
-                    {
-                        playerData.getCastMachine().tick();
-                    }
-
-                    // Spell Execution Code?
-
-                }
-
-
-                case MANA_PASSIVE_REGENERATION ->
-                {
-                    // This Tick must also be called on the client to ensure smooth progress of the mana bar.
-                    // Perhaps in the future we can make the server skip ticks if it is running behind, whilst smoothly
-                    // regenerating on the client.
-                    playerData.getManaManager().tick();
-
-                    // Update maximum Mana and Mana Regeneration every 1.5 Seconds. "Expensive Update"
-                    if (player.getWorld().getTime() % 30 == 0 && player instanceof ServerPlayerEntity)
-                    {
-                        PLAYER_TO_MAGICKDATA.get(player).getManaManager().recalculateRegeneration(player);
-                        PLAYER_TO_MAGICKDATA.get(player).getManaManager().recalculateMaximumMana(player);
-                        sendS2CPacket(player);
-                    }
-                }
-
-
-            }
 
 
 
+        if (isClient) {clientTick(player);}
 
-
-
-
-
-
-
-
+        if (isServer) {serverTick(player);}
 
 
     }
@@ -91,17 +49,15 @@ public abstract class MagickaMachine {
     /**
      * Note: This is the Raw Player Nbt. It is possible that there is no serialized Data in here!
      * */
-    public static void serializeDisconnectingPlayer(PlayerEntity player, NbtCompound playerNbt)
+    public static void serializePlayer(PlayerEntity player, NbtCompound playerNbt)
     {
         if (PLAYER_TO_MAGICKDATA.containsKey(player))
         {
             PlayerRuntimeData playerData = PLAYER_TO_MAGICKDATA.get(player);
-            playerNbt.put(NbtConstants.MAGIC_NBT, playerData.serialize());
-
-
-            // Das darf hier nicht passieren.
-            // PLAYER_TO_MAGICKDATA.remove(player);
+            playerNbt.put(PlayerDataSerializerNbtConstants.MAGIC_NBT, playerData.serialize());
         }
+
+
     }
 
 
@@ -120,7 +76,7 @@ public abstract class MagickaMachine {
         if (!PLAYER_TO_MAGICKDATA.containsKey(player))
         {
             PLAYER_TO_MAGICKDATA.put(player, new PlayerRuntimeData(player));
-            sendS2CPacket(player);
+            S2C_FullTransmission(player);
         }
 
     }
@@ -132,7 +88,7 @@ public abstract class MagickaMachine {
     {
         if (!(player instanceof ServerPlayerEntity))
         {
-            PLAYER_TO_MAGICKDATA.put(player, new PlayerRuntimeData(player, nbt));
+            //clientRepresentation = new PEClientRepresentation(nbt);
         }
 
     }
@@ -140,16 +96,12 @@ public abstract class MagickaMachine {
 
 
 
-    public static void sendS2CPacket(PlayerEntity player)
+    public static void S2C_FullTransmission(PlayerEntity player)
     {
         if (player instanceof ServerPlayerEntity serverPlayer)
         {
-            PacketByteBuf packet = PacketByteBufs.create();
-
-            packet.writeNbt(PLAYER_TO_MAGICKDATA.get(player).serialize());
-
-            ServerPlayNetworking.send(serverPlayer, PacketRegistrator.RUNTIMEDATA_S2C, packet);
-
+            PlayerRuntimeData playerRuntimeData = PLAYER_TO_MAGICKDATA.get(player);
+            S2CUpdater.serverToClientFullSynch(playerRuntimeData);
         }
     }
 
@@ -166,14 +118,93 @@ public abstract class MagickaMachine {
     }
 
 
-    // ToDo; Remove magic numbers.
-    public static void activatePlayerManaRegenerationCooldown(PlayerEntity player)
+    public static void clientTick(PlayerEntity cPlayer)
     {
-        PLAYER_TO_MAGICKDATA.get(player).setState(MagickaMachineState.MANA_ACTIVE_CAST);
+        if (cPlayer instanceof ServerPlayerEntity || clientRepresentation == null) {return;}
 
-        PLAYER_TO_MAGICKDATA.get(player).setRegenerationCooldown(20*3);;
 
+        if (clientRepresentation.state == MagickaMachineState.MANA_ACTIVE_CAST)
+        {
+            MagicHand.LOGGER.info("Active State properly registred.");
+        }
+
+
+        if (clientRepresentation.state == MagickaMachineState.MANA_PASSIVE_REGENERATION)
+        {
+            clientRepresentation.manaFractional = clientRepresentation.manaFractional.add(clientRepresentation.manaRegeneration);
+            if (clientRepresentation.manaFractional.greaterOne())
+            {
+                int regeneratedPoints = clientRepresentation.manaFractional.getWholeAndFlatten();
+                if (clientRepresentation.mana.getNumerator() + regeneratedPoints > clientRepresentation.mana.getDenominator())
+                {
+                    clientRepresentation.mana.setNumerator(clientRepresentation.mana.getDenominator());
+                }
+                else
+                {
+                    clientRepresentation.mana.setNumerator(clientRepresentation.mana.getNumerator() + regeneratedPoints);
+                }
+
+            }
+        }
+
+
+
+
+        // Destroy the representation if it's not refreshed...
+        // This must happen at LAST.
+        if (clientRepresentation.notRefreshed())  {clientRepresentation = null;}
     }
+
+
+    public static void serverTick(PlayerEntity player)
+    {
+        // If the player isn't a magic user (not in Relation) then do nothing (Safety).
+        if (!PLAYER_TO_MAGICKDATA.containsKey(player))  {return;}
+
+        PlayerRuntimeData playerData = PLAYER_TO_MAGICKDATA.get(player);
+
+        if (playerData.loginRefresh())
+        {
+            S2C_FullTransmission(player);
+        }
+
+
+        switch (playerData.getState())
+        {
+            case MANA_ACTIVE_CAST ->
+            {
+
+
+                if (player instanceof ServerPlayerEntity)
+                {
+                    playerData.getCastMachine().tick();
+                }
+
+
+            }
+
+
+            case MANA_PASSIVE_REGENERATION ->
+            {
+                // Perhaps in the future we can make the server skip ticks if it is running behind, whilst smoothly
+                // regenerating on the client.
+                playerData.getManaManager().tick();
+
+                // Update maximum Mana and Mana Regeneration every 1.5 Seconds. "Expensive Update"
+                if (player.getWorld().getTime() % (20*5) == 0 && player instanceof ServerPlayerEntity)
+                {
+                    PLAYER_TO_MAGICKDATA.get(player).getManaManager().recalculateRegeneration(player);
+                    PLAYER_TO_MAGICKDATA.get(player).getManaManager().recalculateMaximumMana(player);
+                    S2C_FullTransmission(player);
+                }
+            }
+
+
+        }
+    }
+
+
+
 
 
 }

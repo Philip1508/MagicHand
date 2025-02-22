@@ -15,6 +15,7 @@ public class ClientPacketRegistrator {
         ClientPlayNetworking.registerGlobalReceiver(PacketRegistrator.STILL_ACTIVE, MouseHoldingPacketResponse::receive);
         ClientPlayNetworking.registerGlobalReceiver(PacketRegistrator.S2C_KEEPALIVE, C2SKeepAliveResponse::receive);
 
+        ClientPlayNetworking.registerGlobalReceiver(PacketRegistrator.RUNTIMEDATA_MACHINESTATE_S2C, S2CMachineStateUpdate::receive);
 
 
         ClientPlayNetworking.registerGlobalReceiver(PacketRegistrator.RUNTIMEDATA_S2C, RuntimeDataInformationPacket::receive);

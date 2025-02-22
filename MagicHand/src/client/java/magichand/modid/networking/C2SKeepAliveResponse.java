@@ -1,5 +1,6 @@
 package magichand.modid.networking;
 
+import magichand.modid.MagicHand;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
@@ -14,8 +15,11 @@ public class C2SKeepAliveResponse {
 
         int response = 0;
 
+
+
         if (MinecraftClient.getInstance().mouse.wasLeftButtonClicked())
         {
+            MagicHand.LOGGER.info("Left Mouse Button Response Affirmative!");
             response += 1;
         }
 

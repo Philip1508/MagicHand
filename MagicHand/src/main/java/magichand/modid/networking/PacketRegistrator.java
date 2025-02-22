@@ -12,6 +12,7 @@ public class PacketRegistrator {
 
 
     public static Identifier RUNTIMEDATA_S2C = new Identifier(MagicHand.MOD_ID, "runtimedata-s2c");
+    public static Identifier RUNTIMEDATA_MACHINESTATE_S2C = new Identifier(MagicHand.MOD_ID, "runtimedata-machinestate-s2c");
 
     public static void initializeAndRegister()
     {

@@ -2,6 +2,7 @@ package magichand.modid.items.spellcatalysts;
 
 import magichand.modid.MagicHand;
 import magichand.modid.playerextension.MagickaMachine;
+import magichand.modid.playerextension.MagickaMachineState;
 import magichand.modid.playerextension.PlayerRuntimeData;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.item.TooltipContext;
@@ -66,10 +67,11 @@ public abstract class AbstractSpellCatalyst extends Item implements RenderAbstra
 
         if (player instanceof ServerPlayerEntity sPlayer)
         {
-            MagickaMachine.getPlayerRuntimeData(sPlayer).getCastMachine().initiateCast(hand);
+            boolean intiatedCast = MagickaMachine.getPlayerRuntimeData(sPlayer).getCastMachine().initiateCast(hand);
+            System.out.println("Boolean is: " + intiatedCast);
+
         }
 
-        // Cast Sequenz in MagickaMachine anstoßen?
         return  TypedActionResult.success(player.getStackInHand(hand));
 
 
