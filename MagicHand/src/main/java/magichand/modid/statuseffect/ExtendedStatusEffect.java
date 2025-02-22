@@ -5,6 +5,7 @@ import magichand.modid.playerextension.MagickaMachine;
 import magichand.modid.playerextension.manaregeneration.ManaManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.attribute.AttributeContainer;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectCategory;
 import net.minecraft.entity.player.PlayerEntity;
@@ -31,6 +32,15 @@ public class ExtendedStatusEffect extends StatusEffect {
 
         }
 
+    }
 
+    @Override
+    public void onApplied(LivingEntity entity, AttributeContainer attributes, int amplifier) {
+        if (entity instanceof PlayerEntity player)
+        {
+            MagickaMachine.recalculateManaManagerSafe(player);
+        }
+
+        super.onApplied(entity, attributes, amplifier);
     }
 }

@@ -13,6 +13,7 @@ import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 
@@ -22,8 +23,8 @@ import java.util.Objects;
 public class RuntimeDataInformationPacket {
 
 
-    public static void receive(MinecraftClient minecraftClient, ClientPlayNetworkHandler clientPlayNetworkHandler, PacketByteBuf packetByteBuf, PacketSender packetSender) {
-
+    public static void receive(MinecraftClient minecraftClient, ClientPlayNetworkHandler clientPlayNetworkHandler,
+                               PacketByteBuf packetByteBuf, PacketSender packetSender) {
 
 
         NbtCompound nbt = packetByteBuf.readUnlimitedNbt();
@@ -34,12 +35,13 @@ public class RuntimeDataInformationPacket {
 
         if (type != 1 && MagickaMachine.clientRepresentation == null) {return;}
 
+
         switch (type)
         {
             case UpdaterHeaderConstants.UPDATE_FULL -> {
                 if (MagickaMachine.clientRepresentation == null)
                 {
-                    generateClientRepresentation(nbt);
+                    generateClientRepresentation(minecraftClient.player, nbt);
                 }
                 NbtCompound manaNbt = nbt.getCompound(UpdaterHeaderConstants.UPDATE_MANA_NBTKEY);
                 NbtCompound stateNbt = nbt.getCompound(UpdaterHeaderConstants.UPDATE_STATE_NBTKEY);
@@ -72,7 +74,7 @@ public class RuntimeDataInformationPacket {
     }
 
 
-    private static void generateClientRepresentation(NbtCompound nbtCompound)
+    private static void generateClientRepresentation(ClientPlayerEntity cPlayer, NbtCompound nbtCompound)
     {
         NbtCompound manaNbt = nbtCompound.getCompound(UpdaterHeaderConstants.UPDATE_MANA_NBTKEY);
 
@@ -87,7 +89,8 @@ public class RuntimeDataInformationPacket {
         MagickaMachineState state = stateNbtToState(stateNbt);
 
 
-        MagickaMachine.clientRepresentation = new PEClientRepresentation(mana, manaRegenerational, manaFractional, state);
+        MagickaMachine.clientRepresentation = new PEClientRepresentation(cPlayer ,mana, manaRegenerational, manaFractional, state);
+
 
     }
 

@@ -109,7 +109,9 @@ public abstract class MagickaMachine {
 
     public static void clientTick(PlayerEntity cPlayer)
     {
+
         if (cPlayer instanceof ServerPlayerEntity || clientRepresentation == null) {return;}
+        if(!(cPlayer.getId() == clientRepresentation.player.getId())) {return;}
 
 
         if (clientRepresentation.state == MagickaMachineState.MANA_ACTIVE_CAST)
@@ -141,7 +143,9 @@ public abstract class MagickaMachine {
 
         // Destroy the representation if it's not refreshed...
         // This must happen at LAST.
-        if (clientRepresentation.notRefreshed())  {clientRepresentation = null;}
+        if (clientRepresentation.notRefreshed())  {
+            clientRepresentation = null;
+        }
     }
 
 
@@ -179,17 +183,34 @@ public abstract class MagickaMachine {
                 // regenerating on the client.
                 playerData.getManaManager().tick();
 
-                // Update maximum Mana and Mana Regeneration every 1.5 Seconds. "Expensive Update"
+                // Update maximum Mana and Mana Regeneration every 5 Seconds. "Expensive Update"
                 if (player.getWorld().getTime() % (20*5) == 0 && player instanceof ServerPlayerEntity)
                 {
-                    PLAYER_TO_MAGICKDATA.get(player).getManaManager().recalculateRegeneration(player);
-                    PLAYER_TO_MAGICKDATA.get(player).getManaManager().recalculateMaximumMana(player);
-                    S2C_FullTransmission(player);
+                    recalculateManaManager(player);
                 }
             }
 
 
         }
+    }
+
+
+
+    private static void recalculateManaManager(PlayerEntity player)
+    {
+        PLAYER_TO_MAGICKDATA.get(player).getManaManager().recalculateRegeneration(player);
+        PLAYER_TO_MAGICKDATA.get(player).getManaManager().recalculateMaximumMana(player);
+        S2C_FullTransmission(player);
+    }
+
+    public static void recalculateManaManagerSafe(PlayerEntity player)
+    {
+        if (PLAYER_TO_MAGICKDATA.containsKey(player))
+        {
+            recalculateManaManager(player);
+        }
+
+
     }
 
 

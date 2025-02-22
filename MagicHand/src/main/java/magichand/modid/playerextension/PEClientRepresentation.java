@@ -2,9 +2,12 @@ package magichand.modid.playerextension;
 
 import magichand.modid.playerextension.maskedconstants.ClientPlayerRepresentationConstants;
 import magichand.modid.util.Rational;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 
 public class PEClientRepresentation {
+
+    public final PlayerEntity player;
 
     static final int DEFAULT_LIFETIME = 6*20;
     int lifetime;
@@ -15,10 +18,11 @@ public class PEClientRepresentation {
     public MagickaMachineState state;
 
 
-    public PEClientRepresentation(Rational mana, Rational manaRegeneration, Rational manaFractional, MagickaMachineState state)
+    public PEClientRepresentation(PlayerEntity player, Rational mana, Rational manaRegeneration, Rational manaFractional, MagickaMachineState state)
     {
-        this.lifetime = 6*20;
+        this.player = player;
 
+        this.lifetime = 6*20;
 
 
         this.mana = mana;
