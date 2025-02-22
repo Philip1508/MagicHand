@@ -1,5 +1,6 @@
 package magichand.modid.statuseffect;
 
+import magichand.modid.networking.S2CUpdater;
 import magichand.modid.playerextension.MagickaMachine;
 import magichand.modid.playerextension.manaregeneration.ManaManager;
 import net.minecraft.entity.Entity;
@@ -25,6 +26,8 @@ public class ExtendedStatusEffect extends StatusEffect {
             // Restores 20% Mana.
             int restoredMana = (int) (manaManager.getMaxMana() * 0.2d);
             manaManager.increaseMana(restoredMana);
+
+            S2CUpdater.serverToClientUpdateMana(player, manaManager);
 
         }
 

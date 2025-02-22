@@ -2,6 +2,7 @@ package magichand.modid.entity;
 
 
 import magichand.modid.MagicHand;
+import magichand.modid.util.PlayerHandOffset;
 import net.fabricmc.fabric.api.particle.v1.FabricParticleTypes;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.data.DataTracker;
@@ -143,7 +144,8 @@ public class NodeParticleEmitter {
 
             Vec3d pos = node.getPos();
 
-            Vec3d handOffset = getHandPosOffset(player, Hand.OFF_HAND);
+
+            Vec3d handOffset = PlayerHandOffset.getAppliedPlayerHandOffset(player, Hand.OFF_HAND);
             Vec3d appliedHandoffste = player.getPos().add(handOffset);
 
 
@@ -253,29 +255,7 @@ public class NodeParticleEmitter {
 
 
 
-    // ToDo; AUSLAGERN!
-    private final Vec3d getRotationVector(float pitch, float yaw) {
-        float f = pitch * (float) (Math.PI / 180.0);
-        float g = -yaw * (float) (Math.PI / 180.0);
-        float h = MathHelper.cos(g);
-        float i = MathHelper.sin(g);
-        float j = MathHelper.cos(f);
-        float k = MathHelper.sin(f);
-        return new Vec3d((double)(i * j), (double)(-k), (double)(h * j));
-    }
 
-    private Vec3d getHandPosOffset(PlayerEntity player, Hand hand) {
-
-        int offSet = 80;
-
-        if (hand == Hand.OFF_HAND)
-        {
-            offSet = -80;
-        }
-
-        return getRotationVector(0.0F, player.getYaw() + offSet).multiply(0.5);
-
-    }
 
 
 

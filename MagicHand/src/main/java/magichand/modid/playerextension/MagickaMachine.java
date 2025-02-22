@@ -84,17 +84,6 @@ public abstract class MagickaMachine {
 
 
 
-    public static void updateClientPlayer(PlayerEntity player, NbtCompound nbt)
-    {
-        if (!(player instanceof ServerPlayerEntity))
-        {
-            //clientRepresentation = new PEClientRepresentation(nbt);
-        }
-
-    }
-
-
-
 
     public static void S2C_FullTransmission(PlayerEntity player)
     {

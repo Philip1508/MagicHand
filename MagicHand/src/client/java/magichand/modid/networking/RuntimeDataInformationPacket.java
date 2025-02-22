@@ -67,7 +67,6 @@ public class RuntimeDataInformationPacket {
         MagickaMachine.clientRepresentation.refresh();
 
 
-        //MagickaMachine.updateClientPlayer(MinecraftClient.getInstance().player, nbt);
 
 
     }

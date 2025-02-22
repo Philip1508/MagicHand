@@ -173,7 +173,17 @@ public class CastMachine {
 
         // Instantiation of the actual Node
         SprayMagicProjectile projectile = SprayMagicProjectile.create(world, user, appliedHandOffset);
-        projectile.setVelocity(user, user.getPitch()-3f,relativYaw ,0.0f, 0.8f, 0.3f);
+        projectile.setVelocity(user, user.getPitch()+0.5f,relativYaw ,0.0f, 0.8f, 0.3f);
+
+        projectile.setVelocity(projectile.getVelocity().getX(),
+                projectile.getVelocity().getY()-user.getVelocity().getY(),
+                projectile.getVelocity().getZ());
+
+
+
+
+
+
 
         switch (hand)
         {
