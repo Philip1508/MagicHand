@@ -5,6 +5,7 @@ import magichand.modid.playerextension.MagickaMachine;
 import magichand.modid.playerextension.MagickaMachineState;
 import magichand.modid.playerextension.PlayerRuntimeData;
 import magichand.modid.playerextension.activecast.CastMachine;
+import magichand.modid.util.CastMachineActivityTuple;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.entity.player.PlayerEntity;
@@ -15,6 +16,7 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.UseAction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
@@ -43,7 +45,7 @@ public abstract class AbstractSpellCatalyst extends Item implements RenderAbstra
 
             CastMachine castMachine = MagickaMachine.getPlayerRuntimeData(sPlayer).getCastMachine();
 
-            boolean[] firingArr = castMachine.isActive();
+            CastMachineActivityTuple handStates = castMachine.isActive();
 
 
             // If Dual Wied
@@ -51,17 +53,22 @@ public abstract class AbstractSpellCatalyst extends Item implements RenderAbstra
             {
                 if (hand == Hand.MAIN_HAND)
                 {
-                    if (!firingArr[1])
+                    if (!handStates.offHandActive)
                     {
                         castMachine.initiateCast(Hand.OFF_HAND);
                     }
 
-                    return  TypedActionResult.pass(player.getStackInHand(Hand.MAIN_HAND));
+                    return  TypedActionResult.pass(sPlayer.getStackInHand(Hand.MAIN_HAND));
                 }
 
             }
 
-            boolean intiatedCast = castMachine.initiateCast(hand);
+            if (hand == Hand.MAIN_HAND && offHandStack.getUseAction() != UseAction.NONE)
+            {
+                return  TypedActionResult.pass(sPlayer.getStackInHand(hand));
+            }
+
+            castMachine.initiateCast(hand);
 
 
 

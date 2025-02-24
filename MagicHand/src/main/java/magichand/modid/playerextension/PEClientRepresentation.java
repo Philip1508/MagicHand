@@ -4,11 +4,16 @@ import magichand.modid.playerextension.maskedconstants.ClientPlayerRepresentatio
 import magichand.modid.util.Rational;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.server.network.ServerPlayerEntity;
 
+/**
+ * This Class contains the Data a client needs to individually represent his Data on the HUD.
+ * Since this data is only used to consume, it is not protected; Everything is public without getters and setters.
+ *
+ */
 public class PEClientRepresentation {
 
     public final PlayerEntity player;
-
     static final int DEFAULT_LIFETIME = 6*20;
     int lifetime = DEFAULT_LIFETIME;
 
@@ -18,8 +23,23 @@ public class PEClientRepresentation {
     public MagickaMachineState state;
 
 
+    /**
+     * Constructor of PEClientRepresentation
+     * @param player - PlayerEntity
+     * @param mana - Players Mana as Rational
+     * @param manaRegeneration - Mana Regeneration Rational
+     * @param manaFractional - Mana Fractional as Rational (partially regenerated)
+     * @param state - State of the Players machine.
+     */
     public PEClientRepresentation(PlayerEntity player, Rational mana, Rational manaRegeneration, Rational manaFractional, MagickaMachineState state)
     {
+        if (player instanceof ServerPlayerEntity)
+        {
+            throw new IllegalArgumentException
+                    ("The Player of the PEClientRepresentation must not be a ServerPlayerEntity" +
+                    ". Something has gone wrong.");
+        }
+
         this.player = player;
 
         this.mana = mana;

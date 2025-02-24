@@ -92,8 +92,11 @@ public class PlayerRuntimeData {
     public CastMachine getCastMachine(){return this.castMachine;}
 
 
-
-
+    /**
+     * This method sets the state of the machine.
+     * It also sends an update packet to the client player.
+     * @param state - New State.
+     */
     public void setState(MagickaMachineState state)
     {
         // Server Side Update
@@ -104,13 +107,23 @@ public class PlayerRuntimeData {
 
 
     }
+
+
+    /**
+     * This Method returns the State the machine is currently in.
+     * @return - MagickaMachineState
+     */
     public MagickaMachineState getState()
     {
         return state;
     }
 
 
-
+    /**
+     * This method returns a boolean, wether the server must send a full refresh package because a player has just
+     * logged on or not.
+     * @return - Boolean: Login Refresh Required?
+     */
     public boolean loginRefresh()
     {
         boolean loginRefresh = loginRefreshRequired;
@@ -119,8 +132,10 @@ public class PlayerRuntimeData {
     }
 
 
-
-
+    /**
+     * This method returns the corresponding Player.
+     * @return - PlayerEntity
+     */
     public PlayerEntity getPlayer()
     {
         return this.player;

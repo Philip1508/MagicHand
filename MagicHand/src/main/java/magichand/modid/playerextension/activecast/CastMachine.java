@@ -8,6 +8,7 @@ import magichand.modid.networking.S2CUpdater;
 import magichand.modid.playerextension.MagickaMachine;
 import magichand.modid.playerextension.MagickaMachineState;
 import magichand.modid.playerextension.PlayerRuntimeData;
+import magichand.modid.util.CastMachineActivityTuple;
 import magichand.modid.util.PlayerHandOffset;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -232,13 +233,14 @@ public class CastMachine {
     }
 
 
-    public boolean[] isActive()
+    /**
+     * This method returns an instance of a class which contains information as booleans, which hand is active and which
+     * is not.
+     * @return - CastMachineActivityTuple, containing public final attributes about hand activity state.
+     */
+    public CastMachineActivityTuple isActive()
     {
-        boolean[] arr = new boolean[2];
-        arr[0] = mainHandFiring;
-        arr[1] = offHandFiring;
-
-        return arr;
+        return new CastMachineActivityTuple(mainHandFiring, offHandFiring);
     }
 
 

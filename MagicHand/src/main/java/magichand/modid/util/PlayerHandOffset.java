@@ -25,7 +25,7 @@ public class PlayerHandOffset {
 
 
     /***
-     * This most unlikely should be within the item itself.
+     * This method applies the HandPosOffset.
      * @param player
      * @param hand
      * @return
@@ -44,6 +44,12 @@ public class PlayerHandOffset {
     }
 
 
+    /**
+     * Public method to obtain the HandPosition of a players given hand.
+     * @param user
+     * @param hand
+     * @return
+     */
     public static Vec3d getAppliedPlayerHandOffset(PlayerEntity user, Hand hand)
     {
 

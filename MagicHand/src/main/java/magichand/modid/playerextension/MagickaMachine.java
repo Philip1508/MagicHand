@@ -18,6 +18,13 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * This Class is the Interface for the Code Injection.
+ * It decouples the Code Injection from the Code that must be injected for clean workflow, so that the injection only
+ * "directly" injects function calls of this Machine.
+ * It statically couples each player with his RunTimeData, which itself is not static anymore.
+ * ToDo; Find a clean method to remove disconnected Players from PLAYER_TO_MAGICKDATA to avoid leaking memory.
+ */
 public abstract class MagickaMachine {
 
 
@@ -215,7 +222,12 @@ public abstract class MagickaMachine {
     }
 
 
-
+    /**
+     * This Method checks wether the given player is part of this API or not.
+     * This allows external code to quickly check for null.
+     * @param sPlayer - Player to Null Check.
+     * @return - Boolean: Is the PlayerRuntimeData of a given player non-null?
+     */
     public static boolean isPlayerMagicuser(ServerPlayerEntity sPlayer)
     {
         return PLAYER_TO_MAGICKDATA.containsKey(sPlayer);

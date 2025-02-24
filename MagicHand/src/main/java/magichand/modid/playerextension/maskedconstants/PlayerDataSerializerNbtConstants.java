@@ -1,5 +1,11 @@
 package magichand.modid.playerextension.maskedconstants;
 
+
+/**
+ * This Class contains String Constants for NbtCompounds bound do static final variables.  (See detecting errors
+ * at compile time)
+ * This Class contains constant for the Serverside serialization (Saving player data)
+ */
 public class PlayerDataSerializerNbtConstants {
 
     public static final String MAGIC_NBT = "MAGIC_NBT";
