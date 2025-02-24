@@ -1,9 +1,9 @@
 package magichand.modid.hud;
 
 import magichand.modid.MagicHand;
+import magichand.modid.playerextension.PEClientRepresentation;
 import magichand.modid.playerextension.MagickaMachine;
-import magichand.modid.playerextension.PlayerRuntimeData;
-import magichand.modid.playerextension.manaregeneration.ManaManager;
+import magichand.modid.util.Rational;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
@@ -32,16 +32,11 @@ public class MagicHandUI implements HudRenderCallback {
 
     @Override
     public void onHudRender(DrawContext drawContext, float tickDelta) {
-        PlayerRuntimeData runtimeData = MagickaMachine.getPlayerRuntimeData(client.player);
+        //PlayerRuntimeData runtimeData = MagickaMachine.getPlayerRuntimeData(client.player);
 
-        if (runtimeData == null)
-        {
-            return;
-        }
+        PEClientRepresentation clientData = MagickaMachine.clientRepresentation;
 
-        ManaManager manaManager = runtimeData.getManaManager();
-
-        if (manaManager == null)
+        if (clientData == null)
         {
             return;
         }
@@ -53,10 +48,11 @@ public class MagicHandUI implements HudRenderCallback {
         TextRenderer textRenderer = MinecraftClient.getInstance().textRenderer;
 
 
+        Rational manaFull = clientData.mana;
 
 
-        int mana = manaManager.getMana();
-        int maxMana = manaManager.getMaxMana();
+        int mana = manaFull.getNumerator();
+        int maxMana = manaFull.getDenominator();
 
         if (mana > maxMana) {mana = maxMana;}
 

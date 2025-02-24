@@ -5,6 +5,7 @@ import magichand.modid.entity.SprayMagicProjectile;
 import magichand.modid.items.spellcatalysts.RenderAbstractionInterface;
 import magichand.modid.networking.PacketRegistrator;
 import magichand.modid.playerextension.MagickaMachine;
+import magichand.modid.playerextension.PlayerRuntimeData;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.block.BlockState;
@@ -209,7 +210,7 @@ public class SprayDebugHand extends Item implements RenderAbstractionInterface {
                 PacketByteBuf packet = PacketByteBufs.create();
                 packet.writeBoolean(false);
                 MagicHand.LOGGER.info("Sending out KeepalivePing");
-                ServerPlayNetworking.send(user,PacketRegistrator.STILL_ACTIVE, packet);
+                ServerPlayNetworking.send(user, PacketRegistrator.STILL_ACTIVE, packet);
             }
 
 
@@ -220,26 +221,45 @@ public class SprayDebugHand extends Item implements RenderAbstractionInterface {
     }
 
 
-
+    /**
+     * This Function shoots a spray node. Mind that it imprints the previous node.
+     * This also holds the Mana Check right now.
+     * @param world
+     * @param user
+     * @param hand
+     * @param stack
+     */
     private void shoot(World world, PlayerEntity user, Hand hand, ItemStack stack)
     {
 
-        boolean x = MagickaMachine.getPlayerRuntimeData(user).getManaManager().decreaseMana(3);
+        // This is the Mana Check. it returns True if Mana was subtracted.
+
+        PlayerRuntimeData data = MagickaMachine.getPlayerRuntimeData(user);
+
+        if (data == null)
+        {
+            return;
+        }
+
+        boolean x = data.getManaManager().decreaseMana(3);
 
         if (!x)
         {
             return;
         }
+        // If a shot was made, Mode is switched to regeneration cooldown.
+        //MagickaMachine. activatePlayerManaRegenerationCooldown(user);
 
-        MagickaMachine.activatePlayerManaRegenerationCooldown(user);
 
-
+        // Here we calculate the handCoordinateOffset and apply it to the users coordinates.
         Vec3d handCoordinates = getHandPosOffset(user, hand);
-
         Vec3d appliedHandOffset = new Vec3d(user.getX() + handCoordinates.getX(), user.getY() + handCoordinates.getY()+1, user.getZ() + handCoordinates.getZ());
 
 
-
+        // This code describes the Pitch and Yad Adjusments, so that the Node flies from the Hand do the center of the
+        // Screen
+        // This may be fixed by using the appliedHandOffset to RayCast? A Sloppy implementation would be better
+        // than magic numbers.
         float relativYaw = user.getYaw()-2.7f;
 
         if (hand == Hand.OFF_HAND)
@@ -248,18 +268,17 @@ public class SprayDebugHand extends Item implements RenderAbstractionInterface {
         }
 
 
+        // The NbtManipulations which fech the Cast Instance and the previous Node.
         NbtCompound nbt = stack.getOrCreateSubNbt(ACTIVE_CAST);
-
         int previousShot = nbt.getInt(UUID_NODE);
 
-
-
+        // Instantiation of the actual Node
         SprayMagicProjectile projectile = SprayMagicProjectile.create(world, user, appliedHandOffset);
         projectile.setVelocity(user, user.getPitch()-3f,relativYaw ,0.0f, 0.8f, 0.3f);
         projectile.setPreviousShot(previousShot);
 
 
-
+        // This is "now" the "previous Node" for the potential next Node
         nbt.putInt(UUID_NODE, projectile.getId());
 
 
@@ -267,7 +286,7 @@ public class SprayDebugHand extends Item implements RenderAbstractionInterface {
 
 
 
-
+        // Spawning of the Entity.
         user.getWorld().spawnEntity(projectile);
 
     }
@@ -276,6 +295,13 @@ public class SprayDebugHand extends Item implements RenderAbstractionInterface {
 
 
 
+
+    /**
+     * See getHandPosOffset
+     * @param pitch
+     * @param yaw
+     * @return
+     */
     private Vec3d getRotationVector(float pitch, float yaw) {
         float f = pitch * (float) (Math.PI / 180.0);
         float g = -yaw * (float) (Math.PI / 180.0);
@@ -286,6 +312,13 @@ public class SprayDebugHand extends Item implements RenderAbstractionInterface {
         return new Vec3d((double)(i * j), (double)(-k), (double)(h * j));
     }
 
+
+    /***
+     * This most unlikely should be within the item itself.
+     * @param player
+     * @param hand
+     * @return
+     */
     private Vec3d getHandPosOffset(PlayerEntity player, Hand hand) {
 
         int offSet = 80;
@@ -313,25 +346,13 @@ public class SprayDebugHand extends Item implements RenderAbstractionInterface {
     }
 
 
-    @Override
-    public void appendTooltip(ItemStack stack, @Nullable World world, List<Text> tooltip, TooltipContext context) {
-        super.appendTooltip(stack, world, tooltip, context);
-
-        NbtCompound nbt = stack.getOrCreateSubNbt(ACTIVE_CAST);
-
-        boolean activeCast = nbt.getBoolean(CURRENTLY_CASTING);
-        int activeHand = nbt.getInt(CASTED_HAND);
-        int ticksleft = nbt.getInt(REMAINING);
-
-
-
-
-
-        tooltip.add(Text.of(String.valueOf(activeCast)));
-        tooltip.add(Text.of(String.valueOf(activeHand)));
-        tooltip.add(Text.of(String.valueOf(ticksleft)));
-
-    }
+    /**
+     * This solely holds debugging information for the NbtChaos.
+     * @param stack
+     * @param world
+     * @param tooltip the list of tooltips to show
+     * @param context
+     */
 
 
 

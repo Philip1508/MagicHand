@@ -1,36 +1,26 @@
 package magichand.modid.entity;
 
 import magichand.modid.MagicHand;
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.PlantBlock;
+
+import net.minecraft.block.*;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MovementType;
+
 import net.minecraft.entity.data.DataTracker;
 import net.minecraft.entity.data.TrackedData;
 import net.minecraft.entity.data.TrackedDataHandlerRegistry;
-import net.minecraft.entity.effect.StatusEffectCategory;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.entity.projectile.ProjectileUtil;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.particle.ParticleTypes;
-import net.minecraft.sound.SoundEvents;
-import net.minecraft.util.hit.BlockHitResult;
+
 import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
-import org.w3c.dom.Node;
 
-import java.util.Random;
 
 public class SprayMagicProjectile extends ProjectileEntity  {
 
@@ -130,6 +120,9 @@ public class SprayMagicProjectile extends ProjectileEntity  {
 
 
 
+
+
+        // ToDo; Interpolation
         if (this.getVelocity().lengthSquared() > 0.10)
         {
             radius = radius + 0.25f;
@@ -150,24 +143,49 @@ public class SprayMagicProjectile extends ProjectileEntity  {
 
         EntityHitResult entityHitResult = this.getEntityCollision(this.getPos(), this.getPos().add(this.getVelocity()));
 
+
+
+
+
+
+
+
         if (entityHitResult != null)
         {
             // ToDo; Code for Effect Application goes here.
-            //entityHitResult.getEntity().damage(getDamageSources().indirectMagic(this,getOwner()),2.5f);
+            //entityHitResult.getEntity()
             if (entityHitResult.getEntity() instanceof  LivingEntity living)
             {
-                living.heal(1.5f + living.getMaxHealth() * 0.025f);
-                living.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, 7*20,1), getOwner());
 
-                 float percentage = living.getHealth() / living.getMaxHealth();
 
-                try {
-                    getOwner().playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 0.3f, percentage);
-                }
-                catch (Exception e)
-                {
-                    MagicHand.LOGGER.info("Caught NullPointerException for SoundEffect of Heal.");
-                }
+
+
+                        /*
+                        living.heal(1.5f + living.getMaxHealth() * 0.025f);
+                        living.addStatusEffect(new StatusEffectInstance(StatusEffects.REGENERATION, 7*20,1), getOwner());
+
+                        float percentage = living.getHealth() / living.getMaxHealth();
+
+                        try {
+                            getOwner().playSound(SoundEvents.ENTITY_EXPERIENCE_ORB_PICKUP, 0.3f, percentage);
+                        }
+                        catch (Exception e)
+                        {
+                            MagicHand.LOGGER.info("Caught NullPointerException for SoundEffect of Heal.");
+                        }*/
+
+
+                living.damage(getDamageSources().indirectMagic(this,getOwner()),2.5f);
+                living.setOnFireFor(10);
+
+
+
+
+
+
+
+
+
 
             }
         }
@@ -313,6 +331,12 @@ public class SprayMagicProjectile extends ProjectileEntity  {
         if (state.getBlock() != Blocks.AIR)
         {
             setVelocity(getVelocity().multiply(0.3));
+
+
+
+            //BlockState fireBlockstate = AbstractFireBlock.getState(getWorld(), this.getBlockPos());
+            //getWorld().setBlockState(this.getBlockPos(), fireBlockstate, PlantBlock.NOTIFY_ALL | Block.REDRAW_ON_MAIN_THREAD);
+
         }
     }
 

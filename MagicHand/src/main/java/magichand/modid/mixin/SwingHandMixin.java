@@ -5,11 +5,14 @@ import magichand.modid.MagicHand;
 import magichand.modid.entity.EntityRegistrator;
 import magichand.modid.items.ItemRegistrator;
 import magichand.modid.items.SprayDebugHand;
+import magichand.modid.items.spellcatalysts.AbstractSpellCatalyst;
+import magichand.modid.playerextension.MagickaMachine;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.util.Hand;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -25,43 +28,33 @@ public abstract class SwingHandMixin {
 
     @Shadow public abstract void remove(Entity.RemovalReason reason);
 
+    @Shadow public abstract boolean isAlive();
+
+    @Shadow public abstract boolean isBaby();
+
+    @Shadow public abstract void swingHand(Hand hand);
+
     @Inject(at = @At("HEAD"), method = "swingHand(Lnet/minecraft/util/Hand;Z)V", cancellable = true)
     public void swingHand(Hand hand, boolean fromServerPlayer, CallbackInfo info)
     {
         // The Linter is confused, which is to be expected since this is code injection.
         LivingEntity entity = ((LivingEntity) (Object) this );
-
-        boolean test = fromServerPlayer;
-        if (test)
-        {
-            MagicHand.LOGGER.info("LOL");
-        }
-
         ItemStack item = entity.getMainHandStack();
 
-
-
-
-
-        if (item.isOf(ItemRegistrator.DEBUG_SPRAY_HAND) && hand == Hand.MAIN_HAND)
+        boolean isChimeTypeItem = item.getItem() instanceof AbstractSpellCatalyst;
+        boolean isPlayerEntity = entity instanceof ServerPlayerEntity sPlayer;
+        System.out.println("Chime Type: " + isChimeTypeItem + " isPlayer: " + isPlayerEntity);
+        if (isChimeTypeItem && entity instanceof ServerPlayerEntity sPlayer)
         {
-            System.out.println("Magic Hand Detected");
-            System.out.println(hand);
-
-            if (entity instanceof PlayerEntity player)
-            {
-                NbtCompound nbt = item.getOrCreateSubNbt(SprayDebugHand.ACTIVE_CAST);
-
-                nbt.putBoolean(SprayDebugHand.CURRENTLY_CASTING, true);
-                nbt.putInt(SprayDebugHand.CASTED_HAND, 2);
-                nbt.putInt(SprayDebugHand.REMAINING,  3);
-            }
-
-
+            MagickaMachine.getPlayerRuntimeData(sPlayer).getCastMachine().initiateCast(Hand.MAIN_HAND);
+            MagicHand.LOGGER.info("Main Hand Chime Firing.");
             info.cancel();
-            return;
+
 
         }
+
+
+
 
     }
 

@@ -1,9 +1,11 @@
 package magichand.modid.statuseffect;
 
+import magichand.modid.networking.S2CUpdater;
 import magichand.modid.playerextension.MagickaMachine;
 import magichand.modid.playerextension.manaregeneration.ManaManager;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.attribute.AttributeContainer;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectCategory;
 import net.minecraft.entity.player.PlayerEntity;
@@ -26,8 +28,19 @@ public class ExtendedStatusEffect extends StatusEffect {
             int restoredMana = (int) (manaManager.getMaxMana() * 0.2d);
             manaManager.increaseMana(restoredMana);
 
+            S2CUpdater.serverToClientUpdateMana(player, manaManager);
+
         }
 
+    }
 
+    @Override
+    public void onApplied(LivingEntity entity, AttributeContainer attributes, int amplifier) {
+        if (entity instanceof PlayerEntity player)
+        {
+            MagickaMachine.recalculateManaManagerSafe(player);
+        }
+
+        super.onApplied(entity, attributes, amplifier);
     }
 }

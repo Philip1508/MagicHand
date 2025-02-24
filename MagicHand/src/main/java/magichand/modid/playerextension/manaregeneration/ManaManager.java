@@ -1,8 +1,9 @@
 package magichand.modid.playerextension.manaregeneration;
 
+import magichand.modid.MagicHand;
 import magichand.modid.enchantments.MaximumManaEnchantment;
 import magichand.modid.enchantments.RegenerateManaEnchantment;
-import magichand.modid.playerextension.NbtConstants;
+import magichand.modid.playerextension.maskedconstants.PlayerDataSerializerNbtConstants;
 import magichand.modid.statuseffect.StatusEffectRegistrator;
 import magichand.modid.util.Rational;
 import net.minecraft.enchantment.Enchantment;
@@ -11,6 +12,7 @@ import net.minecraft.entity.effect.StatusEffectInstance;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.nbt.NbtList;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,6 +37,8 @@ public class ManaManager {
     private int maxMana;
 
     // This Rational represents the current decimal places part of the mana.
+
+
     private Rational fractionalMana;
     // This Rational represents the amount of fractional Mana added to the fractional Mana per Tick.
     private Rational regenerationalFactor;
@@ -46,23 +50,38 @@ public class ManaManager {
         {
             this.mana = 100;
             this.baseMaxMana = 100;
+            this.maxMana = 100;
+            this.fractionalMana = new Rational(0);
+            this.regenerationalFactor = new Rational(0);
         }
         else
         {
-            int mana = serializedManaManagerCompbound.getInt(NbtConstants.MANA);
-            int maxMana = serializedManaManagerCompbound.getInt(NbtConstants.MAX_MANA);
+            int mana = serializedManaManagerCompbound.getInt(PlayerDataSerializerNbtConstants.MANA);
+            int maxMana = serializedManaManagerCompbound.getInt(PlayerDataSerializerNbtConstants.MAX_MANA);
+            int bonusMaxMana = serializedManaManagerCompbound.getInt(PlayerDataSerializerNbtConstants.BONUS_MAX_MANA);
 
-            // This is necessary since gradle clean just doesn't work and old code keeps getting compiled in...
-            if (maxMana != 0)
-            {
-                this.mana = mana;
-                this.baseMaxMana = maxMana;
+            this.mana = mana;
+            this.baseMaxMana = maxMana;
+            this.maxMana = bonusMaxMana;
+
+
+            NbtCompound nbtFractional = serializedManaManagerCompbound.getCompound(PlayerDataSerializerNbtConstants.FRACTIONAL_MANA);
+            NbtCompound nbtRegenerational = serializedManaManagerCompbound.getCompound(PlayerDataSerializerNbtConstants.MANA_REGENERATION_FRACTION);
+
+
+            try {
+                this.fractionalMana = Rational.rationalFromNbt(nbtFractional);
+                this.regenerationalFactor = Rational.rationalFromNbt(nbtRegenerational);
             }
-            else
+            catch (Exception e)
             {
-                this.mana = 100;
-                this.baseMaxMana = 100;
+                MagicHand.LOGGER.warn(e.getMessage());
+                this.fractionalMana = new Rational(0);
+                this.regenerationalFactor = new Rational(0);
             }
+
+
+
 
 
         }
@@ -222,8 +241,15 @@ public class ManaManager {
     public NbtCompound serialize()
     {
         NbtCompound serializedManaManager = new NbtCompound();
-        serializedManaManager.putInt(NbtConstants.MANA, this.mana);
-        serializedManaManager.putInt(NbtConstants.MAX_MANA, this.baseMaxMana);
+        serializedManaManager.putInt(PlayerDataSerializerNbtConstants.MANA, this.mana);
+        serializedManaManager.putInt(PlayerDataSerializerNbtConstants.MAX_MANA, this.baseMaxMana);
+        serializedManaManager.putInt(PlayerDataSerializerNbtConstants.BONUS_MAX_MANA, this.maxMana);
+
+        serializedManaManager.put(PlayerDataSerializerNbtConstants.FRACTIONAL_MANA,
+                Rational.rationalToNbt(fractionalMana) );
+        serializedManaManager.put(PlayerDataSerializerNbtConstants.MANA_REGENERATION_FRACTION,
+                Rational.rationalToNbt(regenerationalFactor) );
+
         return serializedManaManager;
 
     }
@@ -235,12 +261,14 @@ public class ManaManager {
         if (mana - amount >= 0)
         {
             setMana(mana - amount);
+
+
+
             return true;
         }
-        else
-        {
-            return false;
-        }
+
+        return false;
+
 
     }
 
@@ -269,6 +297,25 @@ public class ManaManager {
     public int getMaxMana()
     {
         return maxMana;
+    }
+
+
+    public Rational getFullManaAsRational()
+    {
+        if (maxMana == 0)
+        {
+            return new Rational(mana, 100);
+        }
+
+        return new Rational(mana, maxMana);
+    }
+    public Rational getFractionalMana()
+    {
+        return fractionalMana;
+    }
+    public Rational getRegenerationalFactor()
+    {
+        return regenerationalFactor;
     }
 
 
