@@ -3,6 +3,7 @@ package magichand.modid.playerextension.manaregeneration;
 import magichand.modid.MagicHand;
 import magichand.modid.enchantments.MaximumManaEnchantment;
 import magichand.modid.enchantments.RegenerateManaEnchantment;
+import magichand.modid.playerextension.DataPipe;
 import magichand.modid.playerextension.maskedconstants.PlayerDataSerializerNbtConstants;
 import magichand.modid.statuseffect.StatusEffectRegistrator;
 import magichand.modid.util.Rational;
@@ -21,6 +22,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class ManaManager {
 
+
+    private final DataPipe sharedData;
+
+
     // This is equal to 1%!
     private static int BASE_REGENERATION = 100;
 
@@ -33,7 +38,6 @@ public class ManaManager {
 
     // The Maximum Mana of a player, before "temporary" increases of maximum Mana.
     private int baseMaxMana;
-
     private int maxMana;
 
     // This Rational represents the current decimal places part of the mana.
@@ -44,8 +48,10 @@ public class ManaManager {
     private Rational regenerationalFactor;
 
 
-    public ManaManager(@Nullable NbtCompound serializedManaManagerCompbound)
+    public ManaManager(@Nullable NbtCompound serializedManaManagerCompbound, DataPipe sharedData)
     {
+        this.sharedData = sharedData;
+
         if (serializedManaManagerCompbound == null)
         {
             this.mana = 100;
@@ -117,7 +123,20 @@ public class ManaManager {
                 this.mana += regeneratedPoints;
             }
 
+            // If we pass a certain mana threshold, we want to remove the mana burnout.
+            if (sharedData.getManaBurnoutState())
+            {
+                if (mana > 15)
+                {
+                    sharedData.setManaBurnoutState(false);
+                }
+
+            }
+
+
         }
+
+
 
     }
 
@@ -255,21 +274,20 @@ public class ManaManager {
     }
 
 
-
+    /**
+     * Method to decrease the mana of a player.
+     * @param amount - Mana to decrease.
+     * @return Boolean: Was mana subtracted? False iff mana - amount < 0.
+     */
     public boolean decreaseMana(int amount)
     {
         if (mana - amount >= 0)
         {
             setMana(mana - amount);
-
-
-
             return true;
         }
 
         return false;
-
-
     }
 
     public int getMana()

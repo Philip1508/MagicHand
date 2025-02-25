@@ -21,11 +21,9 @@ public class S2CKeepAlive {
     {
         int stillShooting = buf.readInt();
 
-        MagicHand.LOGGER.info("Shooting Packet Integer is: " + stillShooting);
 
         boolean mainHandStillActive = (stillShooting & 1) == 1;
 
-        MagicHand.LOGGER.info("Boolean mainHandStillActive: " + mainHandStillActive);
 
         boolean offHandStillActive = (stillShooting & 2) == 2;
 
@@ -34,12 +32,12 @@ public class S2CKeepAlive {
         {
             if (!mainHandStillActive)
             {
-                MagicHand.LOGGER.info("Disabling Main Hand Cast due to Network Response!");
+                //MagicHand.LOGGER.info("Disabling Main Hand Cast due to Network Response!");
                 data.getCastMachine().disableHand(Hand.MAIN_HAND);
             }
             if (!offHandStillActive)
             {
-                MagicHand.LOGGER.info("Disabling Off Hand Cast due to Network Response!");
+                //MagicHand.LOGGER.info("Disabling Off Hand Cast due to Network Response!");
                 data.getCastMachine().disableHand(Hand.OFF_HAND);
             }
 
