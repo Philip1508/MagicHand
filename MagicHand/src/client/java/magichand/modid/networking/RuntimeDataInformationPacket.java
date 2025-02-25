@@ -15,6 +15,7 @@ import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 
 import java.util.Objects;
+import java.util.UUID;
 
 // Hier müssen die Spieler Laufzeitdaten empfangen werden.
 public class RuntimeDataInformationPacket {
@@ -33,13 +34,18 @@ public class RuntimeDataInformationPacket {
         if (type != 1 && ClientRepresentationInterface.clientRepresentation == null) {return;}
 
 
+
         switch (type)
         {
             case UpdaterHeaderConstants.UPDATE_FULL -> {
-                if (ClientRepresentationInterface.clientRepresentation == null)
+                if (ClientRepresentationInterface.clientRepresentation == null ||
+                        !clientPlayNetworkHandler.getSessionId()
+                                .equals(ClientRepresentationInterface.clientRepresentation.sessionId))
                 {
-                    generateClientRepresentation(minecraftClient.player, nbt);
+                    generateClientRepresentation(clientPlayNetworkHandler.getSessionId(), nbt);
                 }
+
+
                 NbtCompound manaNbt = nbt.getCompound(UpdaterHeaderConstants.UPDATE_MANA_NBTKEY);
                 NbtCompound stateNbt = nbt.getCompound(UpdaterHeaderConstants.UPDATE_STATE_NBTKEY);
 
@@ -71,8 +77,10 @@ public class RuntimeDataInformationPacket {
     }
 
 
-    private static void generateClientRepresentation(ClientPlayerEntity cPlayer, NbtCompound nbtCompound)
+    private static void generateClientRepresentation(UUID sessionId, NbtCompound nbtCompound)
     {
+
+
         NbtCompound manaNbt = nbtCompound.getCompound(UpdaterHeaderConstants.UPDATE_MANA_NBTKEY);
 
         Rational mana = Rational.rationalFromNbt(manaNbt.getCompound(ClientPlayerRepresentationConstants.C_MANAMANAGER_MANA));
@@ -86,7 +94,7 @@ public class RuntimeDataInformationPacket {
         MagickaMachineState state = stateNbtToState(stateNbt);
 
 
-        ClientRepresentationInterface.clientRepresentation = new PEClientRepresentation(cPlayer ,mana, manaRegenerational, manaFractional, state);
+        ClientRepresentationInterface.clientRepresentation = new PEClientRepresentation(sessionId ,mana, manaRegenerational, manaFractional, state);
 
 
 

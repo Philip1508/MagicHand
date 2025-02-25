@@ -4,6 +4,7 @@ import magichand.modid.items.spellcatalysts.AbstractSpellCatalyst;
 import magichand.modid.playerextension.MagickaMachineState;
 import magichand.modid.util.Rational;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
 
@@ -15,8 +16,6 @@ import java.util.UUID;
  *
  */
 public class PEClientRepresentation {
-
-    public final PlayerEntity player;
 
     public final UUID sessionId;
 
@@ -43,18 +42,11 @@ public class PEClientRepresentation {
      * @param manaFractional - Mana Fractional as Rational (partially regenerated)
      * @param state - State of the Players machine.
      */
-    public PEClientRepresentation(PlayerEntity player, Rational mana, Rational manaRegeneration, Rational manaFractional, MagickaMachineState state)
+    public PEClientRepresentation(UUID sessionId, Rational mana, Rational manaRegeneration, Rational manaFractional, MagickaMachineState state)
     {
-        if (player instanceof ServerPlayerEntity)
-        {
-            throw new IllegalArgumentException
-                    ("The Player of the PEClientRepresentation must not be a ServerPlayerEntity" +
-                    ". Something has gone wrong.");
-        }
 
-        this.player = player;
 
-        this.sessionId = MinecraftClient.getInstance().getNetworkHandler().getSessionId();
+        this.sessionId = sessionId;
 
 
         this.mana = mana;
@@ -88,7 +80,7 @@ public class PEClientRepresentation {
     }
 
 
-    public void hudInactivityCheck()
+    public void hudInactivityCheck(ClientPlayerEntity player)
     {
         boolean mainHandHolding = player.getMainHandStack().getItem() instanceof AbstractSpellCatalyst;
         boolean offHandHolding = player.getOffHandStack().getItem() instanceof AbstractSpellCatalyst;
