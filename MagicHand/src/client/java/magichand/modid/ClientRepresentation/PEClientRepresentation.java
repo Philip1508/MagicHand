@@ -97,8 +97,12 @@ public class PEClientRepresentation {
             hidden = false;
             hideawayTime = DEFAULT_HIDEAWAY_TIME;
         }
+    }
 
-
+    public void unhide()
+    {
+        hidden = false;
+        hideawayTime = DEFAULT_HIDEAWAY_TIME;
     }
 
 

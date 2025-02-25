@@ -32,16 +32,23 @@ public class RuntimeDataTester extends Item {
 
     @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-        if (!world.isClient() && hand == Hand.OFF_HAND)
+
+        if (user instanceof ServerPlayerEntity serverPlayer)
         {
-            MagickaMachine.registerPlayer(user);
-        }
+
+            if (!world.isClient() && hand == Hand.OFF_HAND)
+            {
+                MagickaMachine.registerPlayer(serverPlayer);
+            }
 
 
-        if (!world.isClient() && hand == Hand.MAIN_HAND)
-        {
-            MagickaMachine.getPlayerRuntimeData(user).getManaManager().decreaseMana(10);
+            if (!world.isClient() && hand == Hand.MAIN_HAND)
+            {
+                MagickaMachine.getPlayerRuntimeData(user).getManaManager().decreaseMana(10);
+            }
+
         }
+
 
         return TypedActionResult.pass(user.getStackInHand(hand));
 

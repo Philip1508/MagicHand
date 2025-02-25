@@ -25,11 +25,10 @@ import net.minecraft.world.World;
  */
 public class CastMachine {
 
-    private ServerPlayerEntity player;
 
     private boolean active = false;
 
-    private DataPipe sharedData;
+    private final DataPipe sharedData;
 
 
     private boolean mainHandFiring = false;
@@ -50,27 +49,19 @@ public class CastMachine {
 
 
 
-    public CastMachine(PlayerEntity player, DataPipe sharedData)
+    public CastMachine(DataPipe sharedData)
     {
-        if (!(player instanceof ServerPlayerEntity sPlayer))
-        {
-            throw new IllegalArgumentException("A Cast machine must receive a ServerPlayerEntity");
-        }
-        else
-        {
-            this.player = sPlayer;
-            this.sharedData = sharedData;
-        }
-
+        this.sharedData = sharedData;
     }
 
 
     /**
      * This Method is the tick for the CastMachine.
      */
-    public void tick()
+    public void tick(ServerPlayerEntity player)
     {
         // If the player puts away the chime, casting must be aborted immidiatly.
+
         if (!(player.getStackInHand(Hand.MAIN_HAND).getItem() instanceof AbstractSpellCatalyst) || sharedData.getManaBurnoutState())
         {disableHand(Hand.MAIN_HAND);}
         if (!(player.getStackInHand(Hand.OFF_HAND).getItem() instanceof AbstractSpellCatalyst) || sharedData.getManaBurnoutState())
@@ -83,7 +74,7 @@ public class CastMachine {
         {
             if ((regenerationCooldown -=1) < 0)
             {
-                MagickaMachine.getPlayerRuntimeData(player).setState(MagickaMachineState.MANA_PASSIVE_REGENERATION);
+                MagickaMachine.getPlayerRuntimeData(player).setState(player, MagickaMachineState.MANA_PASSIVE_REGENERATION);
                 regenerationCooldown = REGENERATION_COOLDOWN_DEFAULT;
 
 
@@ -143,7 +134,7 @@ public class CastMachine {
      * @param hand
      * @return Boolean, wether cast has been initiated (true) or not (false, iff already casting)
      */
-    public boolean initiateCast(Hand hand)
+    public boolean initiateCast(ServerPlayerEntity player, Hand hand)
     {
         if (sharedData.getManaBurnoutState()) {return false;}
 
@@ -155,7 +146,7 @@ public class CastMachine {
                 {
                     mainHandFiring = true;
                     mainHandCharger = new SpellChargeMachine(player);
-                    MagickaMachine.getPlayerRuntimeData(player).setState(MagickaMachineState.MANA_ACTIVE_CAST);
+                    MagickaMachine.getPlayerRuntimeData(player).setState(player, MagickaMachineState.MANA_ACTIVE_CAST);
                     return true;
                 }
                 return false;
@@ -166,7 +157,7 @@ public class CastMachine {
                 {
                     offHandFiring = true;
                     offHandCharger = new SpellChargeMachine(player);
-                    MagickaMachine.getPlayerRuntimeData(player).setState(MagickaMachineState.MANA_ACTIVE_CAST);
+                    MagickaMachine.getPlayerRuntimeData(player).setState(player, MagickaMachineState.MANA_ACTIVE_CAST);
                     return true;
                 }
                 return false;

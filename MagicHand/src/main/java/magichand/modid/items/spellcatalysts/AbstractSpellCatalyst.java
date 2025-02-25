@@ -55,7 +55,7 @@ public abstract class AbstractSpellCatalyst extends Item implements RenderAbstra
                 {
                     if (!handStates.offHandActive)
                     {
-                        castMachine.initiateCast(Hand.OFF_HAND);
+                        castMachine.initiateCast(sPlayer, Hand.OFF_HAND);
                     }
 
                     return  TypedActionResult.pass(sPlayer.getStackInHand(Hand.MAIN_HAND));
@@ -68,7 +68,7 @@ public abstract class AbstractSpellCatalyst extends Item implements RenderAbstra
                 return  TypedActionResult.pass(sPlayer.getStackInHand(hand));
             }
 
-            castMachine.initiateCast(hand);
+            castMachine.initiateCast(sPlayer,hand);
 
 
 

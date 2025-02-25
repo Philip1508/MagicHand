@@ -22,6 +22,7 @@ import net.minecraft.text.Text;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * This Class is the Interface for the Code Injection.
@@ -31,28 +32,20 @@ import java.util.Map;
  * ToDo; Find a clean method to remove disconnected Players from PLAYER_TO_MAGICKDATA to avoid leaking memory.
  */
 public abstract class MagickaMachine {
-
-
     // Server Side Map containing the Extended Runtime Data for each Player (Key).
-    private static final Map<PlayerEntity, PlayerRuntimeData> PLAYER_TO_MAGICKDATA = new HashMap<>();
-
-    // This is the Client Side representation of the data given above. This is NOT in the Client Environmnent
-    // due to the nature of the Code Injection Work being done here.
-    //public static PEClientRepresentation clientRepresentation;
-
+    private static final Map<UUID, PlayerRuntimeData> PLAYER_TO_MAGICKDATA = new HashMap<>();
 
     /**
      * This Function is the extended Tick Function of a PlayerEntity.
      * It detects wether we are on the Server or Clientside and calculates the next step of the ExtendedData.
      * @param player - Given from PlayerEntity.tick()
      */
-    public static void tick(PlayerEntity player)
+    public static void tick(ServerPlayerEntity player)
     {
         boolean isClient = player.getWorld().isClient();
         boolean isServer = !isClient;
 
 
-        //if (isClient) {clientTick(player);}
 
         if (isServer) {serverTick(player);}
 
@@ -68,9 +61,11 @@ public abstract class MagickaMachine {
      */
     public static void serializePlayer(PlayerEntity player, NbtCompound playerNbt)
     {
-        if (PLAYER_TO_MAGICKDATA.containsKey(player))
+
+        if (PLAYER_TO_MAGICKDATA.containsKey(player.getUuid()))
         {
-            PlayerRuntimeData playerData = PLAYER_TO_MAGICKDATA.get(player);
+            PlayerRuntimeData playerData = PLAYER_TO_MAGICKDATA.get(player.getUuid());
+
             playerNbt.put(PlayerDataSerializerNbtConstants.MAGIC_NBT, playerData.serialize());
         }
 
@@ -84,7 +79,7 @@ public abstract class MagickaMachine {
      */
     public static void deserializePlayer(PlayerEntity player, NbtCompound magickData)
     {
-        PLAYER_TO_MAGICKDATA.put(player, new PlayerRuntimeData(player,magickData));
+        PLAYER_TO_MAGICKDATA.put(player.getUuid(), new PlayerRuntimeData(magickData));
     }
 
     /**
@@ -92,17 +87,16 @@ public abstract class MagickaMachine {
      *
      * @param player - Player to become a magic user.
      */
-    public static void registerPlayer(PlayerEntity player)
+    public static void registerPlayer(ServerPlayerEntity player)
     {
-        if (!PLAYER_TO_MAGICKDATA.containsKey(player))
+        if (!PLAYER_TO_MAGICKDATA.containsKey(player.getUuid()))
         {
-            PLAYER_TO_MAGICKDATA.put(player, new PlayerRuntimeData(player, null));
+            PLAYER_TO_MAGICKDATA.put(player.getUuid(), new PlayerRuntimeData(null));
 
             player.sendMessage(Text.of("A new sense has awakened inside you..."));
             player.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.AMBIENT, 0.8f, 0.5f);
 
-            S2CUpdater.serverToClientFullSynch(PLAYER_TO_MAGICKDATA.get(player));
-
+            S2CUpdater.serverToClientFullSynch(player, PLAYER_TO_MAGICKDATA.get(player.getUuid()));
         }
 
     }
@@ -116,74 +110,32 @@ public abstract class MagickaMachine {
      */
     public static PlayerRuntimeData getPlayerRuntimeData(PlayerEntity player)
     {
-        return PLAYER_TO_MAGICKDATA.get(player);
+        return PLAYER_TO_MAGICKDATA.get(player.getUuid());
     }
 
 
-    /*
-     * This Method processes a tick on the ClientSide.
-     * @param cPlayer
 
-    private static void clientTick(PlayerEntity cPlayer)
-    {
-
-        if (cPlayer instanceof ServerPlayerEntity || clientRepresentation == null) {return;}
-        if(!(cPlayer.getId() == clientRepresentation.player.getId())) {return;}
-
-
-        clientRepresentation.hudInactivityCheck();
-
-        if (clientRepresentation.state == MagickaMachineState.MANA_PASSIVE_REGENERATION)
-        {
-            clientRepresentation.manaFractional = clientRepresentation.manaFractional.add(clientRepresentation.manaRegeneration);
-            if (clientRepresentation.manaFractional.greaterOne())
-            {
-                int regeneratedPoints = clientRepresentation.manaFractional.getWholeAndFlatten();
-                if (clientRepresentation.mana.getNumerator() + regeneratedPoints > clientRepresentation.mana.getDenominator())
-                {
-                    clientRepresentation.mana.setNumerator(clientRepresentation.mana.getDenominator());
-                }
-                else
-                {
-                    clientRepresentation.mana.setNumerator(clientRepresentation.mana.getNumerator() + regeneratedPoints);
-                }
-
-            }
-        }
-
-
-
-
-
-        // Destroy the representation if it's not refreshed...
-        // This must happen at LAST.
-        if (clientRepresentation.notRefreshed())  {
-            clientRepresentation = null;
-        }
-    }
-
-    */
 
     /**
      * This Method processes a tick on the ServerSide.
      * @param player
      */
-    private static void serverTick(PlayerEntity player)
+    private static void serverTick(ServerPlayerEntity player)
     {
         // If the player isn't a magic user (not in Relation) then do nothing (Safety).
-        if (!PLAYER_TO_MAGICKDATA.containsKey(player) || player.getWorld().isClient() )  {return;}
+        if (!PLAYER_TO_MAGICKDATA.containsKey(player.getUuid()) || player.getWorld().isClient() )  {return;}
 
-        PlayerRuntimeData playerData = PLAYER_TO_MAGICKDATA.get(player);
+        PlayerRuntimeData playerData = PLAYER_TO_MAGICKDATA.get(player.getUuid());
 
         // If the ClientSideRepresentation has not been established yet, do it.
-        if (playerData.loginRefresh()) {S2CUpdater.serverToClientFullSynch(playerData);}
+        if (playerData.loginRefresh()) {S2CUpdater.serverToClientFullSynch(player, playerData);}
 
 
         switch (playerData.getState())
         {
             case MANA_ACTIVE_CAST ->
             {
-                playerData.getCastMachine().tick();
+                playerData.getCastMachine().tick(player);
             }
 
 
@@ -211,12 +163,12 @@ public abstract class MagickaMachine {
      * This method is private, because it asserts the player is registered.
      * @param player - Player whose Mana needs to be recalculated.
      */
-    private static void recalculateManaManager(PlayerEntity player)
+    private static void recalculateManaManager(ServerPlayerEntity player)
     {
-        PlayerRuntimeData playerRuntimeData = PLAYER_TO_MAGICKDATA.get(player);
+        PlayerRuntimeData playerRuntimeData = PLAYER_TO_MAGICKDATA.get(player.getUuid());
         playerRuntimeData.getManaManager().recalculateRegeneration(player);
         playerRuntimeData.getManaManager().recalculateMaximumMana(player);
-        S2CUpdater.serverToClientFullSynch(playerRuntimeData);
+        S2CUpdater.serverToClientFullSynch(player, playerRuntimeData);
     }
 
     /**
@@ -226,14 +178,18 @@ public abstract class MagickaMachine {
      */
     public static void recalculateManaManagerSafe(PlayerEntity player)
     {
-        if (PLAYER_TO_MAGICKDATA.containsKey(player))
+        if (player instanceof ServerPlayerEntity serverPlayer)
         {
-            recalculateManaManager(player);
+            if (PLAYER_TO_MAGICKDATA.containsKey(player.getUuid()))
+            {
+                recalculateManaManager(serverPlayer);
+            }
+            else
+            {
+                registerPlayer(serverPlayer);
+            }
         }
-        else
-        {
-            registerPlayer(player);
-        }
+
     }
 
 
@@ -245,7 +201,7 @@ public abstract class MagickaMachine {
      */
     public static boolean isPlayerMagicuser(ServerPlayerEntity sPlayer)
     {
-        return PLAYER_TO_MAGICKDATA.containsKey(sPlayer);
+        return PLAYER_TO_MAGICKDATA.containsKey(sPlayer.getUuid());
     }
 
 
