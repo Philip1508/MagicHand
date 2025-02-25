@@ -2,6 +2,7 @@ package magichand.modid.ClientRepresentation;
 
 import magichand.modid.playerextension.MagickaMachineState;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayNetworkHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.player.PlayerEntity;
 
@@ -22,18 +23,19 @@ public abstract class ClientRepresentationInterface {
      *
      * @param cPlayer
      */
-    private static void clientTick(PlayerEntity cPlayer) {
+    private static void clientTick(ClientPlayerEntity cPlayer) {
 
 
-
-
-
-        if (MinecraftClient.getInstance().getNetworkHandler().getSessionId() != clientRepresentation.sessionId ) {
+        ClientPlayNetworkHandler networkHandler = MinecraftClient.getInstance().getNetworkHandler();
+        if (networkHandler == null || !(networkHandler.getSessionId().equals(clientRepresentation.sessionId)))
+        {
             clientRepresentation = null;
             return;
         }
 
-        clientRepresentation.hudInactivityCheck();
+
+
+        clientRepresentation.hudInactivityCheck(cPlayer);
 
         if (clientRepresentation.state == MagickaMachineState.MANA_PASSIVE_REGENERATION) {
             clientRepresentation.manaFractional = clientRepresentation.manaFractional.add(clientRepresentation.manaRegeneration);
@@ -46,6 +48,15 @@ public abstract class ClientRepresentationInterface {
                 }
 
             }
+        }
+
+
+
+
+
+        if (clientRepresentation.notRefreshed())
+        {
+            clientRepresentation = null;
         }
 
     }
