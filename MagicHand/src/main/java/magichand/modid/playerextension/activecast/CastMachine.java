@@ -5,6 +5,7 @@ import magichand.modid.entity.SprayMagicProjectile;
 import magichand.modid.items.spellcatalysts.AbstractSpellCatalyst;
 import magichand.modid.networking.PacketRegistrator;
 import magichand.modid.networking.S2CUpdater;
+import magichand.modid.playerextension.DataPipe;
 import magichand.modid.playerextension.MagickaMachine;
 import magichand.modid.playerextension.MagickaMachineState;
 import magichand.modid.playerextension.PlayerRuntimeData;
@@ -24,15 +25,21 @@ import net.minecraft.world.World;
  */
 public class CastMachine {
 
-    private PlayerEntity player;
+    private ServerPlayerEntity player;
 
     private boolean active = false;
 
+    private DataPipe sharedData;
+
+
     private boolean mainHandFiring = false;
+    private SpellChargeMachine mainHandCharger;
     private int mainHandPreviousNodeUUID = 0;
 
 
+
     private boolean offHandFiring = false;
+    private SpellChargeMachine offHandCharger;
     private int offHandPreviousNodeUUID = 0;
 
 
@@ -43,9 +50,18 @@ public class CastMachine {
 
 
 
-    public CastMachine(PlayerEntity player)
+    public CastMachine(PlayerEntity player, DataPipe sharedData)
     {
-        this.player = player;
+        if (!(player instanceof ServerPlayerEntity sPlayer))
+        {
+            throw new IllegalArgumentException("A Cast machine must receive a ServerPlayerEntity");
+        }
+        else
+        {
+            this.player = sPlayer;
+            this.sharedData = sharedData;
+        }
+
     }
 
 
@@ -54,9 +70,14 @@ public class CastMachine {
      */
     public void tick()
     {
+        // If the player puts away the chime, casting must be aborted immidiatly.
+        if (!(player.getStackInHand(Hand.MAIN_HAND).getItem() instanceof AbstractSpellCatalyst) || sharedData.getManaBurnoutState())
+        {disableHand(Hand.MAIN_HAND);}
+        if (!(player.getStackInHand(Hand.OFF_HAND).getItem() instanceof AbstractSpellCatalyst) || sharedData.getManaBurnoutState())
+        {disableHand(Hand.OFF_HAND);}
+
 
         this.active = mainHandFiring || offHandFiring;
-
         // If the cast is not active anymore, then we must set the player on his way to start regenerating mana again!
         if (!active)
         {
@@ -64,47 +85,48 @@ public class CastMachine {
             {
                 MagickaMachine.getPlayerRuntimeData(player).setState(MagickaMachineState.MANA_PASSIVE_REGENERATION);
                 regenerationCooldown = REGENERATION_COOLDOWN_DEFAULT;
+
+
+                return;
             }
         }
 
 
-        boolean timeForUpdate = player.getWorld().getTime() % 3 == 0;
-        if (!timeForUpdate)
+
+        if (mainHandFiring)
         {
-            return;
-        }
+            sharedData.setManaBurnoutState(sharedData.getManaBurnoutState() | !mainHandCharger.tick());
 
-
-        // If the player puts away the chime, casting must be aborted immidiatly.
-        if (!(player.getStackInHand(Hand.MAIN_HAND).getItem() instanceof AbstractSpellCatalyst))
-        { disableHand(Hand.MAIN_HAND); }
-        if (!(player.getStackInHand(Hand.OFF_HAND).getItem() instanceof AbstractSpellCatalyst))
-        { disableHand(Hand.OFF_HAND); }
-
-        // If the cast is active, we must check if the player is still holding down the mouse buttons!
-        if (active && player instanceof ServerPlayerEntity sPlayer)
-        {
-
-
-
-            PacketByteBuf packet = PacketByteBufs.create();
-            packet.writeBoolean(false);
-            MagicHand.LOGGER.info("Sending out KeepalivePing");
-            ServerPlayNetworking.send(sPlayer, PacketRegistrator.S2C_KEEPALIVE, packet);
-
-            if (mainHandFiring)
+            if (mainHandCharger.shotReady())
             {
                 shoot(player.getWorld(), player, Hand.MAIN_HAND);
             }
 
+        }
 
-            if (offHandFiring)
+
+        if (offHandFiring)
+        {
+            sharedData.setManaBurnoutState(sharedData.getManaBurnoutState() | !offHandCharger.tick());
+
+            if (offHandCharger.shotReady())
             {
                 shoot(player.getWorld(), player, Hand.OFF_HAND);
             }
 
-
         }
+
+
+
+        if (mainHandFiring || offHandFiring)
+        {
+            ServerPlayNetworking.send(player, PacketRegistrator.S2C_KEEPALIVE, PacketByteBufs.create());
+        }
+
+
+
+
+
 
 
 
@@ -123,12 +145,16 @@ public class CastMachine {
      */
     public boolean initiateCast(Hand hand)
     {
+        if (sharedData.getManaBurnoutState()) {return false;}
+
+
         switch (hand)
         {
             case MAIN_HAND -> {
                 if (!mainHandFiring)
                 {
                     mainHandFiring = true;
+                    mainHandCharger = new SpellChargeMachine(player);
                     MagickaMachine.getPlayerRuntimeData(player).setState(MagickaMachineState.MANA_ACTIVE_CAST);
                     return true;
                 }
@@ -139,6 +165,7 @@ public class CastMachine {
                 if (!offHandFiring)
                 {
                     offHandFiring = true;
+                    offHandCharger = new SpellChargeMachine(player);
                     MagickaMachine.getPlayerRuntimeData(player).setState(MagickaMachineState.MANA_ACTIVE_CAST);
                     return true;
                 }
@@ -160,19 +187,6 @@ public class CastMachine {
     private void shoot(World world, PlayerEntity user, Hand hand)
     {
 
-        PlayerRuntimeData data = MagickaMachine.getPlayerRuntimeData(user);
-
-        boolean enoughMana = data.getManaManager().decreaseMana(3);
-        S2CUpdater.serverToClientUpdateMana(player, data.getManaManager());
-
-        if (!enoughMana)
-        {
-            // ToDo; Abort Mission Code / Disable Cast Sequence!
-            mainHandFiring = false;
-            offHandFiring = false;
-            return;
-        }
-
         Vec3d appliedHandOffset = PlayerHandOffset.getAppliedPlayerHandOffset(user, hand);
 
         // ToDo; Abstract for Dynamic Distance!
@@ -190,10 +204,6 @@ public class CastMachine {
         projectile.setVelocity(projectile.getVelocity().getX(),
                 projectile.getVelocity().getY()-user.getVelocity().getY(),
                 projectile.getVelocity().getZ());
-
-
-
-
 
 
 
@@ -226,8 +236,15 @@ public class CastMachine {
     {
         switch (hand)
         {
-            case MAIN_HAND -> {mainHandFiring = false;}
-            case OFF_HAND -> {offHandFiring = false;}
+            case MAIN_HAND -> {
+                mainHandFiring = false;
+                mainHandCharger = null;
+            }
+            case OFF_HAND -> {
+                offHandFiring = false;
+                offHandCharger = null;
+
+            }
         }
 
     }

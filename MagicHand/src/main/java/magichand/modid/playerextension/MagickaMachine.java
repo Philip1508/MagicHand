@@ -14,6 +14,7 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.encryption.ClientPlayerSession;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
@@ -128,6 +129,8 @@ public abstract class MagickaMachine {
 
         if (cPlayer instanceof ServerPlayerEntity || clientRepresentation == null) {return;}
         if(!(cPlayer.getId() == clientRepresentation.player.getId())) {return;}
+
+
         clientRepresentation.hudInactivityCheck();
 
         if (clientRepresentation.state == MagickaMachineState.MANA_PASSIVE_REGENERATION)
@@ -225,6 +228,10 @@ public abstract class MagickaMachine {
         if (PLAYER_TO_MAGICKDATA.containsKey(player))
         {
             recalculateManaManager(player);
+        }
+        else
+        {
+            registerPlayer(player);
         }
     }
 

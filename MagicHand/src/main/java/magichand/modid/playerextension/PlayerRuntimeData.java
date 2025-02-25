@@ -25,14 +25,15 @@ public class PlayerRuntimeData {
 
     // This reference is necessary for enabling tasks such as scanning the inventory.
     private final PlayerEntity player;
-    private final ManaManager manaManager;
 
+
+    private final DataPipe sharedData;
+    private final ManaManager manaManager;
     private final CastMachine castMachine;
 
     private MagickaMachineState state = MagickaMachineState.MANA_PASSIVE_REGENERATION;
 
 
-    private boolean loginRefreshRequired = true;
 
 
 
@@ -45,35 +46,25 @@ public class PlayerRuntimeData {
             throw new IllegalArgumentException("Player in PlayerRuntimeData must not be a ClientPlayer!");
         }
 
+        this.sharedData = new DataPipe();
+
         if (magickData == null)
         {
-            this.manaManager = new ManaManager(null);
+            this.manaManager = new ManaManager(null, sharedData);
         }
         else
         {
             NbtCompound manaManagerCompbound = magickData.getCompound(PlayerDataSerializerNbtConstants.MANA_MANAGER);
-            this.manaManager = new ManaManager(manaManagerCompbound);
+            this.manaManager = new ManaManager(manaManagerCompbound, sharedData);
         }
 
-
-        this.castMachine = new CastMachine(player);
+        this.castMachine = new CastMachine(player, sharedData);
 
 
     }
 
 
 
-    public PlayerRuntimeData(PlayerEntity player)
-    {
-        if (!(player instanceof ServerPlayerEntity))
-        {
-            throw new IllegalArgumentException("Player in PlayerRuntimeData must not be a ClientPlayer!");
-        }
-
-        this.player = player;
-        this.manaManager = new ManaManager(null);
-        this.castMachine = new CastMachine(player);
-    }
 
 
 
@@ -98,7 +89,9 @@ public class PlayerRuntimeData {
     {
         return this.manaManager;
     }
-    public CastMachine getCastMachine(){return this.castMachine;}
+    public CastMachine getCastMachine(){
+        return this.castMachine;
+    }
 
 
     /**
@@ -128,6 +121,8 @@ public class PlayerRuntimeData {
     }
 
 
+
+
     /**
      * This method returns a boolean, wether the server must send a full refresh package because a player has just
      * logged on or not.
@@ -135,9 +130,7 @@ public class PlayerRuntimeData {
      */
     public boolean loginRefresh()
     {
-        boolean loginRefresh = loginRefreshRequired;
-        loginRefreshRequired = false;
-        return loginRefresh;
+        return sharedData.loginRefresh();
     }
 
 

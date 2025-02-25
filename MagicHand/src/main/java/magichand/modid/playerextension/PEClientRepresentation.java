@@ -1,6 +1,7 @@
 package magichand.modid.playerextension;
 
 import magichand.modid.items.spellcatalysts.AbstractSpellCatalyst;
+import magichand.modid.statuseffect.StatusEffectRegistrator;
 import magichand.modid.util.Rational;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
@@ -89,13 +90,19 @@ public class PEClientRepresentation {
         }
 
 
-        if (hidden && mainHandHolding || offHandHolding)
+        if (hidden && mainHandHolding || offHandHolding ||
+                player.getStatusEffect(StatusEffectRegistrator.MANA_REGENERATION) != null)
         {
             hidden = false;
             hideawayTime = DEFAULT_HIDEAWAY_TIME;
         }
 
+    }
 
+    public void hudWakeUp()
+    {
+        hidden = false;
+        hideawayTime = DEFAULT_HIDEAWAY_TIME;
     }
 
 

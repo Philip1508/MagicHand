@@ -54,12 +54,15 @@ public class RuntimeDataInformationPacket {
             case UpdaterHeaderConstants.UPDATE_MANA_HEADERNUMBER -> {
                 NbtCompound manaNbt = nbt.getCompound(UpdaterHeaderConstants.UPDATE_MANA_NBTKEY);
                 updateClientMana(manaNbt);
+                MagickaMachine.clientRepresentation.hudWakeUp();
 
             }
 
             case UpdaterHeaderConstants.UPDATE_STATE -> {
                 NbtCompound stateNbt = nbt.getCompound(UpdaterHeaderConstants.UPDATE_STATE_NBTKEY);
                 updateClientState(stateNbt);
+                MagickaMachine.clientRepresentation.hudWakeUp();
+
 
             }
 
@@ -112,8 +115,8 @@ public class RuntimeDataInformationPacket {
     private static void updateClientState(NbtCompound stateNbt)
     {
         PEClientRepresentation clientRepresentation = MagickaMachine.clientRepresentation;
-
         clientRepresentation.state = stateNbtToState(stateNbt);
+
 
 
 
