@@ -1,15 +1,12 @@
 package magichand.modid.networking;
 
 
-import magichand.modid.MagicHand;
+import magichand.modid.ClientRepresentation.ClientRepresentationInterface;
 import magichand.modid.networking.headers.UpdaterHeaderConstants;
-import magichand.modid.playerextension.MagickaMachine;
 import magichand.modid.playerextension.MagickaMachineState;
-import magichand.modid.playerextension.PEClientRepresentation;
+import magichand.modid.ClientRepresentation.PEClientRepresentation;
 import magichand.modid.playerextension.maskedconstants.ClientPlayerRepresentationConstants;
 import magichand.modid.util.Rational;
-import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayNetworkHandler;
@@ -33,13 +30,13 @@ public class RuntimeDataInformationPacket {
 
         int type = nbt.getInt(UpdaterHeaderConstants.UPDATE_HEADER_KEY);
 
-        if (type != 1 && MagickaMachine.clientRepresentation == null) {return;}
+        if (type != 1 && ClientRepresentationInterface.clientRepresentation == null) {return;}
 
 
         switch (type)
         {
             case UpdaterHeaderConstants.UPDATE_FULL -> {
-                if (MagickaMachine.clientRepresentation == null)
+                if (ClientRepresentationInterface.clientRepresentation == null)
                 {
                     generateClientRepresentation(minecraftClient.player, nbt);
                 }
@@ -54,22 +51,19 @@ public class RuntimeDataInformationPacket {
             case UpdaterHeaderConstants.UPDATE_MANA_HEADERNUMBER -> {
                 NbtCompound manaNbt = nbt.getCompound(UpdaterHeaderConstants.UPDATE_MANA_NBTKEY);
                 updateClientMana(manaNbt);
-                MagickaMachine.clientRepresentation.hudWakeUp();
 
             }
 
             case UpdaterHeaderConstants.UPDATE_STATE -> {
                 NbtCompound stateNbt = nbt.getCompound(UpdaterHeaderConstants.UPDATE_STATE_NBTKEY);
                 updateClientState(stateNbt);
-                MagickaMachine.clientRepresentation.hudWakeUp();
-
 
             }
 
 
         }
 
-        MagickaMachine.clientRepresentation.refresh();
+        ClientRepresentationInterface.clientRepresentation.refresh();
 
 
 
@@ -92,14 +86,15 @@ public class RuntimeDataInformationPacket {
         MagickaMachineState state = stateNbtToState(stateNbt);
 
 
-        MagickaMachine.clientRepresentation = new PEClientRepresentation(cPlayer ,mana, manaRegenerational, manaFractional, state);
+        ClientRepresentationInterface.clientRepresentation = new PEClientRepresentation(cPlayer ,mana, manaRegenerational, manaFractional, state);
+
 
 
     }
 
     private static void updateClientMana(NbtCompound manaNbt)
     {
-        PEClientRepresentation clientRepresentation = MagickaMachine.clientRepresentation;
+        PEClientRepresentation clientRepresentation = ClientRepresentationInterface.clientRepresentation;
 
 
         Rational mana = Rational.rationalFromNbt(manaNbt.getCompound(ClientPlayerRepresentationConstants.C_MANAMANAGER_MANA));
@@ -114,9 +109,9 @@ public class RuntimeDataInformationPacket {
 
     private static void updateClientState(NbtCompound stateNbt)
     {
-        PEClientRepresentation clientRepresentation = MagickaMachine.clientRepresentation;
-        clientRepresentation.state = stateNbtToState(stateNbt);
+        PEClientRepresentation clientRepresentation = ClientRepresentationInterface.clientRepresentation;
 
+        clientRepresentation.state = stateNbtToState(stateNbt);
 
 
 

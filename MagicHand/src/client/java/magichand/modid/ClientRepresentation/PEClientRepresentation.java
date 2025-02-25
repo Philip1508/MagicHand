@@ -1,10 +1,13 @@
-package magichand.modid.playerextension;
+package magichand.modid.ClientRepresentation;
 
 import magichand.modid.items.spellcatalysts.AbstractSpellCatalyst;
-import magichand.modid.statuseffect.StatusEffectRegistrator;
+import magichand.modid.playerextension.MagickaMachineState;
 import magichand.modid.util.Rational;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.network.ServerPlayerEntity;
+
+import java.util.UUID;
 
 /**
  * This Class contains the Data a client needs to individually represent his Data on the HUD.
@@ -14,6 +17,10 @@ import net.minecraft.server.network.ServerPlayerEntity;
 public class PEClientRepresentation {
 
     public final PlayerEntity player;
+
+    public final UUID sessionId;
+
+
     static final int DEFAULT_LIFETIME = 6*20;
     int lifetime = DEFAULT_LIFETIME;
 
@@ -46,6 +53,9 @@ public class PEClientRepresentation {
         }
 
         this.player = player;
+
+        this.sessionId = MinecraftClient.getInstance().getNetworkHandler().getSessionId();
+
 
         this.mana = mana;
         this.manaRegeneration = manaRegeneration;
@@ -90,19 +100,13 @@ public class PEClientRepresentation {
         }
 
 
-        if (hidden && mainHandHolding || offHandHolding ||
-                player.getStatusEffect(StatusEffectRegistrator.MANA_REGENERATION) != null)
+        if (hidden && mainHandHolding || offHandHolding)
         {
             hidden = false;
             hideawayTime = DEFAULT_HIDEAWAY_TIME;
         }
 
-    }
 
-    public void hudWakeUp()
-    {
-        hidden = false;
-        hideawayTime = DEFAULT_HIDEAWAY_TIME;
     }
 
 
