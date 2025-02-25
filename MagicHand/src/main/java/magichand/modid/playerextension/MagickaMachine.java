@@ -1,6 +1,7 @@
 package magichand.modid.playerextension;
 
 import magichand.modid.MagicHand;
+import magichand.modid.items.spellcatalysts.AbstractSpellCatalyst;
 import magichand.modid.networking.PacketRegistrator;
 import magichand.modid.networking.S2CUpdater;
 import magichand.modid.playerextension.activecast.CastMachine;
@@ -14,6 +15,9 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.text.Text;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -91,8 +95,13 @@ public abstract class MagickaMachine {
     {
         if (!PLAYER_TO_MAGICKDATA.containsKey(player))
         {
-            PLAYER_TO_MAGICKDATA.put(player, new PlayerRuntimeData(player));
+            PLAYER_TO_MAGICKDATA.put(player, new PlayerRuntimeData(player, null));
+
+            player.sendMessage(Text.of("A new sense has awakened inside you..."));
+            player.playSound(SoundEvents.ENTITY_PLAYER_LEVELUP, SoundCategory.AMBIENT, 0.8f, 0.5f);
+
             S2CUpdater.serverToClientFullSynch(PLAYER_TO_MAGICKDATA.get(player));
+
         }
 
     }
@@ -119,13 +128,7 @@ public abstract class MagickaMachine {
 
         if (cPlayer instanceof ServerPlayerEntity || clientRepresentation == null) {return;}
         if(!(cPlayer.getId() == clientRepresentation.player.getId())) {return;}
-
-
-        if (clientRepresentation.state == MagickaMachineState.MANA_ACTIVE_CAST)
-        {
-            MagicHand.LOGGER.info("Active State properly registred.");
-        }
-
+        clientRepresentation.hudInactivityCheck();
 
         if (clientRepresentation.state == MagickaMachineState.MANA_PASSIVE_REGENERATION)
         {
@@ -144,6 +147,10 @@ public abstract class MagickaMachine {
 
             }
         }
+
+
+
+
 
         // Destroy the representation if it's not refreshed...
         // This must happen at LAST.

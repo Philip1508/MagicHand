@@ -1,9 +1,8 @@
 package magichand.modid.playerextension;
 
-import magichand.modid.playerextension.maskedconstants.ClientPlayerRepresentationConstants;
+import magichand.modid.items.spellcatalysts.AbstractSpellCatalyst;
 import magichand.modid.util.Rational;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.nbt.NbtCompound;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 /**
@@ -21,6 +20,11 @@ public class PEClientRepresentation {
     public Rational manaRegeneration;
     public Rational manaFractional;
     public MagickaMachineState state;
+
+
+    private static final int DEFAULT_HIDEAWAY_TIME = 3*20;
+    private int hideawayTime = DEFAULT_HIDEAWAY_TIME;
+    public boolean hidden = false;
 
 
     /**
@@ -71,6 +75,30 @@ public class PEClientRepresentation {
     {
         lifetime = DEFAULT_LIFETIME;
     }
+
+
+    public void hudInactivityCheck()
+    {
+        boolean mainHandHolding = player.getMainHandStack().getItem() instanceof AbstractSpellCatalyst;
+        boolean offHandHolding = player.getOffHandStack().getItem() instanceof AbstractSpellCatalyst;
+
+        if (!mainHandHolding && !offHandHolding && !hidden && hideawayTime >= 0)
+        {
+            hideawayTime -= 1;
+            if (hideawayTime < 0) {hidden = true;}
+        }
+
+
+        if (hidden && mainHandHolding || offHandHolding)
+        {
+            hidden = false;
+            hideawayTime = DEFAULT_HIDEAWAY_TIME;
+        }
+
+
+    }
+
+
 
 
 }

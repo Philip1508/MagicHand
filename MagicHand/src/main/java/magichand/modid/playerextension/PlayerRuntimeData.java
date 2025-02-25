@@ -13,6 +13,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * This Class represents a Data Structure which holds the runtime Data of a Player.
@@ -36,7 +37,7 @@ public class PlayerRuntimeData {
 
 
     // ToDo; Mask Constructors via FactoryPattern for uniform constructor!
-    public PlayerRuntimeData(PlayerEntity player, NbtCompound magickData) {
+    public PlayerRuntimeData(PlayerEntity player, @Nullable NbtCompound magickData) {
         this.player = player;
 
         if (!(player instanceof ServerPlayerEntity))
@@ -44,9 +45,17 @@ public class PlayerRuntimeData {
             throw new IllegalArgumentException("Player in PlayerRuntimeData must not be a ClientPlayer!");
         }
 
-        NbtCompound manaManagerCompbound = magickData.getCompound(PlayerDataSerializerNbtConstants.MANA_MANAGER);
+        if (magickData == null)
+        {
+            this.manaManager = new ManaManager(null);
+        }
+        else
+        {
+            NbtCompound manaManagerCompbound = magickData.getCompound(PlayerDataSerializerNbtConstants.MANA_MANAGER);
+            this.manaManager = new ManaManager(manaManagerCompbound);
+        }
 
-        this.manaManager = new ManaManager(manaManagerCompbound);
+
         this.castMachine = new CastMachine(player);
 
 

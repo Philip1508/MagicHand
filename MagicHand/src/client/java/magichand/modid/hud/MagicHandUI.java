@@ -41,6 +41,12 @@ public class MagicHandUI implements HudRenderCallback {
             return;
         }
 
+        if (clientData.hidden)
+        {
+            return;
+        }
+
+
 
         int width, height;
         width = client.getWindow().getScaledWidth();
@@ -60,6 +66,8 @@ public class MagicHandUI implements HudRenderCallback {
                 (width / 2 )
                 ,
                 height - (manaBarHeightOffset + textHeightBonusOffset), 0xFFFFFF);
+
+
 
         renderManaBar(drawContext, mana, maxMana);
 
@@ -89,8 +97,6 @@ public class MagicHandUI implements HudRenderCallback {
         if (translatedManaPercentageWidth > 0) {
             drawContext.drawTexture(ICONS, barWidth, barHeight, u2, v2, translatedManaPercentageWidth, 5);
         }
-
-
 
 
     }
