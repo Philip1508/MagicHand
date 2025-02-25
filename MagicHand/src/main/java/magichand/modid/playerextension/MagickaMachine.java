@@ -37,7 +37,7 @@ public abstract class MagickaMachine {
 
     // This is the Client Side representation of the data given above. This is NOT in the Client Environmnent
     // due to the nature of the Code Injection Work being done here.
-    public static PEClientRepresentation clientRepresentation;
+    //public static PEClientRepresentation clientRepresentation;
 
 
     /**
@@ -51,7 +51,7 @@ public abstract class MagickaMachine {
         boolean isServer = !isClient;
 
 
-        if (isClient) {clientTick(player);}
+        //if (isClient) {clientTick(player);}
 
         if (isServer) {serverTick(player);}
 
@@ -119,10 +119,10 @@ public abstract class MagickaMachine {
     }
 
 
-    /**
+    /*
      * This Method processes a tick on the ClientSide.
      * @param cPlayer
-     */
+
     private static void clientTick(PlayerEntity cPlayer)
     {
 
@@ -159,6 +159,7 @@ public abstract class MagickaMachine {
         }
     }
 
+    */
 
     /**
      * This Method processes a tick on the ServerSide.
@@ -225,6 +226,10 @@ public abstract class MagickaMachine {
         if (PLAYER_TO_MAGICKDATA.containsKey(player))
         {
             recalculateManaManager(player);
+        }
+        else
+        {
+            registerPlayer(player);
         }
     }
 

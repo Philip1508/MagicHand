@@ -1,8 +1,8 @@
 package magichand.modid.hud;
 
+import magichand.modid.ClientRepresentation.ClientRepresentationInterface;
 import magichand.modid.MagicHand;
-import magichand.modid.playerextension.PEClientRepresentation;
-import magichand.modid.playerextension.MagickaMachine;
+import magichand.modid.ClientRepresentation.PEClientRepresentation;
 import magichand.modid.util.Rational;
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
@@ -34,7 +34,7 @@ public class MagicHandUI implements HudRenderCallback {
     public void onHudRender(DrawContext drawContext, float tickDelta) {
         //PlayerRuntimeData runtimeData = MagickaMachine.getPlayerRuntimeData(client.player);
 
-        PEClientRepresentation clientData = MagickaMachine.clientRepresentation;
+        PEClientRepresentation clientData = ClientRepresentationInterface.clientRepresentation;
 
         if (clientData == null)
         {
