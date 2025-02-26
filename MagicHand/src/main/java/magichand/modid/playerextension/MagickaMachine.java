@@ -47,6 +47,7 @@ public abstract class MagickaMachine {
 
 
 
+
         if (isServer) {serverTick(player);}
 
 
@@ -202,6 +203,13 @@ public abstract class MagickaMachine {
     public static boolean isPlayerMagicuser(ServerPlayerEntity sPlayer)
     {
         return PLAYER_TO_MAGICKDATA.containsKey(sPlayer.getUuid());
+    }
+
+
+    public static void removePlayer(ServerPlayerEntity player)
+    {
+        UUID uUID = player.getUuid();
+        PLAYER_TO_MAGICKDATA.remove(uUID);
     }
 
 
