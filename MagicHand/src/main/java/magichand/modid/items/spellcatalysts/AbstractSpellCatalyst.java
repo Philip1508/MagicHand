@@ -63,7 +63,7 @@ public abstract class AbstractSpellCatalyst extends Item implements RenderAbstra
 
             }
 
-            if (hand == Hand.MAIN_HAND && offHandStack.getUseAction() != UseAction.NONE)
+            if (hand == Hand.MAIN_HAND || offHandStack.getUseAction() != UseAction.NONE)
             {
                 return  TypedActionResult.pass(sPlayer.getStackInHand(hand));
             }
