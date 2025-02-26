@@ -57,6 +57,7 @@ public class RuntimeDataInformationPacket {
             case UpdaterHeaderConstants.UPDATE_MANA_HEADERNUMBER -> {
                 NbtCompound manaNbt = nbt.getCompound(UpdaterHeaderConstants.UPDATE_MANA_NBTKEY);
                 updateClientMana(manaNbt);
+                ClientRepresentationInterface.clientRepresentation.unhide();
 
             }
 

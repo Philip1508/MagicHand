@@ -15,6 +15,8 @@ import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.UUID;
+
 /**
  * This Class represents a Data Structure which holds the runtime Data of a Player.
  * This Includes a reference to the player himself in order to grant future access to the inventory.
@@ -22,9 +24,6 @@ import org.jetbrains.annotations.Nullable;
  * It will most likely also hold a spell inventory in the future.
  */
 public class PlayerRuntimeData {
-
-    // This reference is necessary for enabling tasks such as scanning the inventory.
-    private final PlayerEntity player;
 
 
     private final DataPipe sharedData;
@@ -35,16 +34,9 @@ public class PlayerRuntimeData {
 
 
 
+    public PlayerRuntimeData(@Nullable NbtCompound magickData) {
 
 
-    // ToDo; Mask Constructors via FactoryPattern for uniform constructor!
-    public PlayerRuntimeData(PlayerEntity player, @Nullable NbtCompound magickData) {
-        this.player = player;
-
-        if (!(player instanceof ServerPlayerEntity))
-        {
-            throw new IllegalArgumentException("Player in PlayerRuntimeData must not be a ClientPlayer!");
-        }
 
         this.sharedData = new DataPipe();
 
@@ -58,7 +50,7 @@ public class PlayerRuntimeData {
             this.manaManager = new ManaManager(manaManagerCompbound, sharedData);
         }
 
-        this.castMachine = new CastMachine(player, sharedData);
+        this.castMachine = new CastMachine(sharedData);
 
 
     }
@@ -99,15 +91,13 @@ public class PlayerRuntimeData {
      * It also sends an update packet to the client player.
      * @param state - New State.
      */
-    public void setState(MagickaMachineState state)
+    public void setState(ServerPlayerEntity player, MagickaMachineState state)
     {
         // Server Side Update
         this.state = state;
 
         // Client Synch Message Update!
         S2CUpdater.serverToClientUpdateState(player, state);
-
-
     }
 
 
@@ -134,14 +124,8 @@ public class PlayerRuntimeData {
     }
 
 
-    /**
-     * This method returns the corresponding Player.
-     * @return - PlayerEntity
-     */
-    public PlayerEntity getPlayer()
-    {
-        return this.player;
-    }
+
+
     
 
 }

@@ -12,6 +12,7 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
+import org.apache.logging.log4j.core.jmx.Server;
 
 public class S2CUpdater {
 
@@ -36,7 +37,7 @@ public class S2CUpdater {
     }
 
 
-    public static void serverToClientUpdateMana(PlayerEntity player, ManaManager manaManager)
+    public static void serverToClientUpdateMana(ServerPlayerEntity player, ManaManager manaManager)
     {
 
         NbtCompound nbtCompound = new NbtCompound();
@@ -69,7 +70,7 @@ public class S2CUpdater {
 
     }
 
-    public static void serverToClientUpdateState(PlayerEntity player, MagickaMachineState state)
+    public static void serverToClientUpdateState(ServerPlayerEntity player, MagickaMachineState state)
     {
 
         NbtCompound nbtCompound = new NbtCompound();
@@ -81,7 +82,7 @@ public class S2CUpdater {
         sendMessage(player, nbtCompound);
     }
 
-    public static void serverToClientFullSynch(PlayerRuntimeData runtimeData)
+    public static void serverToClientFullSynch(ServerPlayerEntity player, PlayerRuntimeData runtimeData)
     {
         NbtCompound nbtCompound = new NbtCompound();
 
@@ -90,25 +91,20 @@ public class S2CUpdater {
         nbtCompound.put(UpdaterHeaderConstants.UPDATE_MANA_NBTKEY, manaToNbt(runtimeData.getManaManager()));
         nbtCompound.put(UpdaterHeaderConstants.UPDATE_STATE_NBTKEY, stateToNbt(runtimeData.getState()));
 
-        sendMessage(runtimeData.getPlayer(), nbtCompound);
+        sendMessage(player, nbtCompound);
 
 
     }
 
 
-    private static void sendMessage(PlayerEntity player, NbtCompound nbtCompound)
+    private static void sendMessage(ServerPlayerEntity player, NbtCompound nbtCompound)
     {
         PacketByteBuf packet = PacketByteBufs.create();
 
         packet.writeNbt(nbtCompound);
 
-        if (player instanceof ServerPlayerEntity serverPlayer)
-        {
-            ServerPlayNetworking.send(serverPlayer, PacketRegistrator.RUNTIMEDATA_S2C, packet);
-        }
 
-
-
+        ServerPlayNetworking.send(player, PacketRegistrator.RUNTIMEDATA_S2C, packet);
 
     }
 

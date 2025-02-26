@@ -46,7 +46,7 @@ public abstract class SwingHandMixin {
         //System.out.println("Chime Type: " + isChimeTypeItem + " isPlayer: " + isPlayerEntity);
         if (isChimeTypeItem && entity instanceof ServerPlayerEntity sPlayer)
         {
-            MagickaMachine.getPlayerRuntimeData(sPlayer).getCastMachine().initiateCast(Hand.MAIN_HAND);
+            MagickaMachine.getPlayerRuntimeData(sPlayer).getCastMachine().initiateCast(sPlayer,Hand.MAIN_HAND);
             //MagicHand.LOGGER.info("Main Hand Chime Firing.");
             info.cancel();
 
