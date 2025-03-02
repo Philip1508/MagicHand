@@ -8,11 +8,10 @@ import magichand.modid.playerextension.maskedconstants.ClientPlayerRepresentatio
 import magichand.modid.util.Rational;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
-import org.apache.logging.log4j.core.jmx.Server;
+import net.minecraft.util.Hand;
 
 public class S2CUpdater {
 
@@ -96,6 +95,35 @@ public class S2CUpdater {
 
     }
 
+
+
+    public static void serverToClientUpdateCharger(ServerPlayerEntity player, Rational chargerLevel, Hand hand)
+    {
+        NbtCompound nbtCompound = new NbtCompound();
+
+        nbtCompound.putInt(UpdaterHeaderConstants.UPDATE_HEADER_KEY, UpdaterHeaderConstants.UPDATE_CHARGER);
+
+        if (hand == Hand.MAIN_HAND)
+        {
+            nbtCompound.putString(UpdaterHeaderConstants.UPDATE_CHARGER_HAND_KEY, UpdaterHeaderConstants.UPDATE_MAINHAND_CHARGER);
+        }
+        if (hand == Hand.OFF_HAND)
+        {
+            nbtCompound.putString(UpdaterHeaderConstants.UPDATE_CHARGER_HAND_KEY, UpdaterHeaderConstants.UPDATE_OFFHAND_CHARGER);
+        }
+
+        nbtCompound.put(UpdaterHeaderConstants.UPDATE_CHARGER_DATA, Rational.rationalToNbt(chargerLevel));
+
+
+        sendMessage(player, nbtCompound);
+    }
+
+    public static void serverToClientRefresh(ServerPlayerEntity player)
+    {
+        NbtCompound nbt = new NbtCompound();
+        nbt.putInt(UpdaterHeaderConstants.UPDATE_HEADER_KEY, 0);
+        sendMessage(player, nbt);
+    }
 
     private static void sendMessage(ServerPlayerEntity player, NbtCompound nbtCompound)
     {

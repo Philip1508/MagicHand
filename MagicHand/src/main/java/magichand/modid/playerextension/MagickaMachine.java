@@ -131,6 +131,10 @@ public abstract class MagickaMachine {
         // If the ClientSideRepresentation has not been established yet, do it.
         if (playerData.loginRefresh()) {S2CUpdater.serverToClientFullSynch(player, playerData);}
 
+        if (player.getWorld().getTime() % (20*5) == 0)
+        {
+            S2CUpdater.serverToClientRefresh(player);
+        }
 
         switch (playerData.getState())
         {
