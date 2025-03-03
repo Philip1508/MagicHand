@@ -11,6 +11,7 @@ import magichand.modid.playerextension.MagickaMachineState;
 import magichand.modid.playerextension.PlayerRuntimeData;
 import magichand.modid.util.CastMachineActivityTuple;
 import magichand.modid.util.PlayerHandOffset;
+import magichand.modid.util.TimeCalculator;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
@@ -26,24 +27,20 @@ import net.minecraft.world.World;
 public class CastMachine {
 
 
-    private boolean active = false;
-
     private final DataPipe sharedData;
 
 
     private boolean mainHandFiring = false;
     private SpellChargeMachine mainHandCharger;
-    private int mainHandPreviousNodeUUID = 0;
 
 
 
     private boolean offHandFiring = false;
     private SpellChargeMachine offHandCharger;
-    private int offHandPreviousNodeUUID = 0;
 
 
 
-    private static final int REGENERATION_COOLDOWN_DEFAULT = (20) * 3;
+    private static final int REGENERATION_COOLDOWN_DEFAULT = TimeCalculator.secondsToTick(3);
 
     private int regenerationCooldown = REGENERATION_COOLDOWN_DEFAULT;
 
@@ -60,15 +57,20 @@ public class CastMachine {
      */
     public void tick(ServerPlayerEntity player)
     {
-        // If the player puts away the chime, casting must be aborted immidiatly.
+        // If the player puts away the chime casting must be aborted immidiatly.
 
-        if (!(player.getStackInHand(Hand.MAIN_HAND).getItem() instanceof AbstractSpellCatalyst) || sharedData.getManaBurnoutState())
-        {disableHand(Hand.MAIN_HAND);}
-        if (!(player.getStackInHand(Hand.OFF_HAND).getItem() instanceof AbstractSpellCatalyst) || sharedData.getManaBurnoutState())
-        {disableHand(Hand.OFF_HAND);}
+        if (!(player.getStackInHand(Hand.MAIN_HAND).getItem() instanceof AbstractSpellCatalyst)
+                || sharedData.getManaBurnoutState()
+                && mainHandFiring)
+        { disableHand(Hand.MAIN_HAND); }
+
+        if (!(player.getStackInHand(Hand.OFF_HAND).getItem() instanceof AbstractSpellCatalyst)
+                || sharedData.getManaBurnoutState()
+                && offHandFiring)
+        { disableHand(Hand.OFF_HAND); }
 
 
-        this.active = mainHandFiring || offHandFiring;
+        boolean active = mainHandFiring || offHandFiring;
         // If the cast is not active anymore, then we must set the player on his way to start regenerating mana again!
         if (!active)
         {
@@ -86,23 +88,24 @@ public class CastMachine {
 
         if (mainHandFiring)
         {
-            sharedData.setManaBurnoutState(sharedData.getManaBurnoutState() | !mainHandCharger.tick());
+            SpellChargerState mainHandChargerState = mainHandCharger.tick();
+            activateManaBurnout(mainHandChargerState);
 
-            if (mainHandCharger.shotReady())
+            if (mainHandChargerState == SpellChargerState.FULLY_CHARGED)
             {
-                shoot(player.getWorld(), player, Hand.MAIN_HAND);
+                disableHand(Hand.MAIN_HAND);
             }
 
         }
 
-
         if (offHandFiring)
         {
-            sharedData.setManaBurnoutState(sharedData.getManaBurnoutState() | !offHandCharger.tick());
+            SpellChargerState offHandChargerState = offHandCharger.tick();
+            activateManaBurnout(offHandChargerState);
 
-            if (offHandCharger.shotReady())
+            if (offHandChargerState == SpellChargerState.FULLY_CHARGED)
             {
-                shoot(player.getWorld(), player, Hand.OFF_HAND);
+                disableHand(Hand.OFF_HAND);
             }
 
         }
@@ -113,18 +116,6 @@ public class CastMachine {
         {
             ServerPlayNetworking.send(player, PacketRegistrator.S2C_KEEPALIVE, PacketByteBufs.create());
         }
-
-
-
-
-
-
-
-
-
-
-
-
 
     }
 
@@ -145,7 +136,7 @@ public class CastMachine {
                 if (!mainHandFiring)
                 {
                     mainHandFiring = true;
-                    mainHandCharger = new SpellChargeMachine(player);
+                    mainHandCharger = new SpellChargeMachine(player, Hand.MAIN_HAND);
                     MagickaMachine.getPlayerRuntimeData(player).setState(player, MagickaMachineState.MANA_ACTIVE_CAST);
                     return true;
                 }
@@ -156,7 +147,7 @@ public class CastMachine {
                 if (!offHandFiring)
                 {
                     offHandFiring = true;
-                    offHandCharger = new SpellChargeMachine(player);
+                    offHandCharger = new SpellChargeMachine(player, Hand.OFF_HAND);
                     MagickaMachine.getPlayerRuntimeData(player).setState(player, MagickaMachineState.MANA_ACTIVE_CAST);
                     return true;
                 }
@@ -169,53 +160,7 @@ public class CastMachine {
     }
 
 
-    /**
-     * This Method deploys a projectile.
-     * @param world - World of projectile.
-     * @param user - Caster
-     * @param hand - Hand where the projectile is being cast.
-     */
-    private void shoot(World world, PlayerEntity user, Hand hand)
-    {
 
-        Vec3d appliedHandOffset = PlayerHandOffset.getAppliedPlayerHandOffset(user, hand);
-
-        // ToDo; Abstract for Dynamic Distance!
-        float relativYaw = user.getYaw()-2.7f;
-        if (hand == Hand.OFF_HAND)
-        {
-            relativYaw = user.getYaw()+2.7f;
-        }
-
-
-        // Instantiation of the actual Node
-        SprayMagicProjectile projectile = SprayMagicProjectile.create(world, user, appliedHandOffset);
-        projectile.setVelocity(user, user.getPitch()+0.5f,relativYaw ,0.0f, 0.8f, 0.3f);
-
-        projectile.setVelocity(projectile.getVelocity().getX(),
-                projectile.getVelocity().getY()-user.getVelocity().getY(),
-                projectile.getVelocity().getZ());
-
-
-
-        switch (hand)
-        {
-            case MAIN_HAND -> {
-                projectile.setPreviousShot(mainHandPreviousNodeUUID);
-                mainHandPreviousNodeUUID = projectile.getId();
-            }
-
-            case OFF_HAND -> {
-                projectile.setPreviousShot(offHandPreviousNodeUUID);
-                offHandPreviousNodeUUID = projectile.getId();
-            }
-        }
-
-
-        // Spawning of the Entity.
-        user.getWorld().spawnEntity(projectile);
-
-    }
 
 
     /**
@@ -229,12 +174,11 @@ public class CastMachine {
         {
             case MAIN_HAND -> {
                 mainHandFiring = false;
-                mainHandCharger = null;
+                popSpellCharger(hand);
             }
             case OFF_HAND -> {
+                popSpellCharger(hand);
                 offHandFiring = false;
-                offHandCharger = null;
-
             }
         }
 
@@ -249,6 +193,42 @@ public class CastMachine {
     public CastMachineActivityTuple isActive()
     {
         return new CastMachineActivityTuple(mainHandFiring, offHandFiring);
+    }
+
+
+    public void popSpellCharger(Hand hand)
+    {
+        switch (hand)
+        {
+            case MAIN_HAND ->
+            {
+                if (mainHandCharger != null)
+                {
+                    mainHandCharger.pop();
+                    mainHandCharger = null;
+                }
+            }
+
+            case OFF_HAND ->
+            {
+                if (offHandCharger != null)
+                {
+                    offHandCharger.pop();
+                    offHandCharger = null;
+                }
+            }
+        }
+
+
+    }
+
+
+    private void activateManaBurnout(SpellChargerState state)
+    {
+        if (state == SpellChargerState.OUT_OF_MANA)
+        {
+            this.sharedData.setManaBurnoutState(true);
+        }
     }
 
 

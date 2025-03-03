@@ -28,6 +28,9 @@ public class PEClientRepresentation {
     public Rational manaFractional;
     public MagickaMachineState state;
 
+    public Rational mainCharge = new Rational(0, 1);
+    public Rational offCharge = new Rational(0,1);
+
 
     private static final int DEFAULT_HIDEAWAY_TIME = 3*20;
     private int hideawayTime = DEFAULT_HIDEAWAY_TIME;
@@ -36,7 +39,6 @@ public class PEClientRepresentation {
 
     /**
      * Constructor of PEClientRepresentation
-     * @param player - PlayerEntity
      * @param mana - Players Mana as Rational
      * @param manaRegeneration - Mana Regeneration Rational
      * @param manaFractional - Mana Fractional as Rational (partially regenerated)

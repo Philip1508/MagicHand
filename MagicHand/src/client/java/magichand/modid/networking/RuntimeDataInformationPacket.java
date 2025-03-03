@@ -67,12 +67,35 @@ public class RuntimeDataInformationPacket {
 
             }
 
+            case UpdaterHeaderConstants.UPDATE_CHARGER ->
+            {
+                updateChargerState(nbt);
+            }
+
 
         }
 
         ClientRepresentationInterface.clientRepresentation.refresh();
 
 
+
+
+    }
+
+    private static void updateChargerState(NbtCompound nbt) {
+
+        String handString = nbt.getString(UpdaterHeaderConstants.UPDATE_CHARGER_KEY);
+
+        Rational rational = Rational.rationalFromNbt(nbt.getCompound(UpdaterHeaderConstants.UPDATE_CHARGER_DATA));
+
+        if (handString.equals(UpdaterHeaderConstants.UPDATE_MAINHAND_CHARGER))
+        {
+            ClientRepresentationInterface.clientRepresentation.mainCharge = rational;
+        }
+        if (handString.equals(UpdaterHeaderConstants.UPDATE_OFFHAND_CHARGER))
+        {
+            ClientRepresentationInterface.clientRepresentation.offCharge = rational;
+        }
 
 
     }
