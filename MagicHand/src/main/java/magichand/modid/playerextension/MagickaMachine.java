@@ -9,6 +9,7 @@ import magichand.modid.playerextension.manaregeneration.ManaManager;
 import magichand.modid.playerextension.maskedconstants.ClientPlayerRepresentationConstants;
 import magichand.modid.playerextension.maskedconstants.PlayerDataSerializerNbtConstants;
 import magichand.modid.util.Rational;
+import magichand.modid.util.TimeCalculator;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
@@ -34,6 +35,9 @@ import java.util.UUID;
 public abstract class MagickaMachine {
     // Server Side Map containing the Extended Runtime Data for each Player (Key).
     private static final Map<UUID, PlayerRuntimeData> PLAYER_TO_MAGICKDATA = new HashMap<>();
+
+    private static final int HUD_PING_COOLDOWN = TimeCalculator.secondsToTick(5);
+    private static final int MANAMANAGER_REFRESH_COOLDOWN = TimeCalculator.secondsToTick(5);
 
     /**
      * This Function is the extended Tick Function of a PlayerEntity.
@@ -131,7 +135,7 @@ public abstract class MagickaMachine {
         // If the ClientSideRepresentation has not been established yet, do it.
         if (playerData.loginRefresh()) {S2CUpdater.serverToClientFullSynch(player, playerData);}
 
-        if (player.getWorld().getTime() % (20*5) == 0)
+        if (player.getWorld().getTime() % (HUD_PING_COOLDOWN) == 0)
         {
             S2CUpdater.serverToClientRefresh(player);
         }
@@ -151,7 +155,7 @@ public abstract class MagickaMachine {
                 playerData.getManaManager().tick();
 
                 // Update maximum Mana and Mana Regeneration every 5 Seconds. "Expensive Update"
-                if (player.getWorld().getTime() % (20*5) == 0)
+                if (player.getWorld().getTime() % (MANAMANAGER_REFRESH_COOLDOWN) == 0)
                 {
                     recalculateManaManager(player);
                 }

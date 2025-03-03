@@ -9,10 +9,8 @@ public class PacketRegistrator {
 
     public  static  Identifier STILL_ACTIVE = new Identifier(MagicHand.MOD_ID, "still-active-ping");
     public  static  Identifier S2C_KEEPALIVE = new Identifier(MagicHand.MOD_ID, "s2c-keepalive");
-
-
     public static Identifier RUNTIMEDATA_S2C = new Identifier(MagicHand.MOD_ID, "runtimedata-s2c");
-    public static Identifier RUNTIMEDATA_MACHINESTATE_S2C = new Identifier(MagicHand.MOD_ID, "runtimedata-machinestate-s2c");
+
 
     public static void initializeAndRegister()
     {

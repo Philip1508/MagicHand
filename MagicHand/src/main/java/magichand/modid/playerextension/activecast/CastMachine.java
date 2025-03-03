@@ -11,6 +11,7 @@ import magichand.modid.playerextension.MagickaMachineState;
 import magichand.modid.playerextension.PlayerRuntimeData;
 import magichand.modid.util.CastMachineActivityTuple;
 import magichand.modid.util.PlayerHandOffset;
+import magichand.modid.util.TimeCalculator;
 import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.entity.player.PlayerEntity;
@@ -26,8 +27,6 @@ import net.minecraft.world.World;
 public class CastMachine {
 
 
-    private boolean active = false;
-
     private final DataPipe sharedData;
 
 
@@ -41,7 +40,7 @@ public class CastMachine {
 
 
 
-    private static final int REGENERATION_COOLDOWN_DEFAULT = (20) * 3;
+    private static final int REGENERATION_COOLDOWN_DEFAULT = TimeCalculator.secondsToTick(3);
 
     private int regenerationCooldown = REGENERATION_COOLDOWN_DEFAULT;
 
@@ -71,7 +70,7 @@ public class CastMachine {
         { disableHand(Hand.OFF_HAND); }
 
 
-        this.active = mainHandFiring || offHandFiring;
+        boolean active = mainHandFiring || offHandFiring;
         // If the cast is not active anymore, then we must set the player on his way to start regenerating mana again!
         if (!active)
         {

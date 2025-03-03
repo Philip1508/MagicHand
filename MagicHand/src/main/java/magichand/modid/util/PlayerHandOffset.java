@@ -5,7 +5,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
-public class PlayerHandOffset {
+public abstract class PlayerHandOffset {
 
     /**
      * See getHandPosOffset
