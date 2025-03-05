@@ -8,6 +8,7 @@ import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.font.TextRenderer;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.texture.Sprite;
 import net.minecraft.text.Text;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
@@ -149,6 +150,8 @@ public class MagicHandUI implements HudRenderCallback {
         float percentageMana = (float) mana / (float) maxMana;
         int translatedManaPercentageWidth = (int)(percentageMana * (float) manaBarTextureWidthPixels);
 
+
+        Sprite s;
 
 
         drawContext.drawTexture(ICONS, barWidth, barHeight, u, v, manaBarTextureWidthPixels, 5);

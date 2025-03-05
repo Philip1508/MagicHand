@@ -18,13 +18,13 @@ import net.minecraft.util.math.Vec3d;
 import java.util.Random;
 
 
-//ToDo; Rewrite completely.
+//ToDo; Rewrite completely + Move to Client Environment!.
 public class NodeParticleEmitter {
 
     public static final Random numberGenerator = new Random();
     public static final double phi = Math.PI * (Math.sqrt(5) - 1);
 
-    private static final ParticleEffect PARTICLE_TYPE = ParticleTypes.SMALL_FLAME ;
+    private static final ParticleEffect PARTICLE_TYPE = ParticleTypes.SMALL_FLAME;
 
 
 
