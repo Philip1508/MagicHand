@@ -31,7 +31,7 @@ public class SpellChargeMachine {
     private final Rational chargeLevel = new Rational(0);
 
     private int previousNodeUUID = 0;
-    private final SpellType spellType = SpellType.PROJECTILE;
+    private final SpellType spellType = SpellType.SPRAY;
 
 
 
@@ -47,8 +47,8 @@ public class SpellChargeMachine {
         this.spellCostPerSecond = 10;
         this.spellCostRationalTick = new Rational(spellCostPerSecond,20);
 
-        // Preset to
-        this.chargeLevel.setDenominator(30);
+        // This sets ticks until fully charged.
+        this.chargeLevel.setDenominator(6);
 
 
     }
@@ -61,7 +61,7 @@ public class SpellChargeMachine {
     public SpellChargerState tick()
     {
 
-        if (fullyCharged())
+        if (fullyCharged() && spellType != SpellType.SPRAY)
         {
             return SpellChargerState.WAITING_FOR_RELEASE;
         }
@@ -100,12 +100,14 @@ public class SpellChargeMachine {
         {
             case SPRAY ->
             {
-                shoot(player.getWorld(), player);
+                incrementChargelevel();
+                if (mediumCharged())
+                {
+                    shoot(player.getWorld(), player);
+                }
             }
             default -> {
-                chargeLevel.setNumerator(chargeLevel.getNumerator()+1);
-                S2CUpdater.serverToClientUpdateCharger(player, chargeLevel, hand);
-
+                incrementChargelevel();
                 if (fullyCharged())
                 {
                     return SpellChargerState.WAITING_FOR_RELEASE;
@@ -180,6 +182,16 @@ public class SpellChargeMachine {
     }
 
 
+    public boolean minimumCharged()
+    {
+        return chargeLevel.getNumerator() >= 4;
+    }
+
+    public boolean mediumCharged()
+    {
+        return chargeLevel.getNumerator() >= chargeLevel.getDenominator();
+    }
+
     public boolean fullyCharged()
     {
         if (spellType == SpellType.SPRAY) {return false;}
@@ -189,15 +201,24 @@ public class SpellChargeMachine {
 
     public void pop() {
 
-        if (spellType == SpellType.SPRAY) {return;}
+        S2CUpdater.serverToClientUpdateCharger(player, new Rational(0,1), hand);
 
         if (spellType == SpellType.PROJECTILE)
         {
-            S2CUpdater.serverToClientUpdateCharger(player, new Rational(0,1), hand);
             shoot(player.getWorld(), player);
         }
 
-        MagicHand.LOGGER.info("Popping Spell with: " + chargeLevel.getNumerator() + " / " + chargeLevel.getDenominator());
+
+    }
+
+
+    private void incrementChargelevel()
+    {
+        if (chargeLevel.getNumerator() < chargeLevel.getDenominator()*2)
+        {
+            chargeLevel.setNumerator(chargeLevel.getNumerator()+1);
+            S2CUpdater.serverToClientUpdateCharger(player, chargeLevel, hand);
+        }
     }
 
 
